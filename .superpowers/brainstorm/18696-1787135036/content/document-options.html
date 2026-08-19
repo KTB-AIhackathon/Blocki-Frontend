@@ -1,0 +1,227 @@
+<!-- Blocki 문서 관리 방식 비교용 임시 와이어프레임 -->
+<style>
+  .doc-options {
+    display: grid;
+    gap: 18px;
+  }
+
+  .doc-options .card {
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid #dbe3e7;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(20, 42, 52, .06);
+    cursor: pointer;
+  }
+
+  .doc-options .card:hover,
+  .doc-options .card.selected {
+    border-color: #0aaeb8;
+    box-shadow: 0 0 0 3px rgba(10, 174, 184, .16), 0 12px 30px rgba(20, 42, 52, .1);
+  }
+
+  .doc-preview {
+    padding: 14px;
+    background: #f5f8f9;
+  }
+
+  .doc-window {
+    min-height: 205px;
+    overflow: hidden;
+    border: 1px solid #dfe7ea;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .doc-window-bar {
+    height: 20px;
+    background: #edf2f4;
+  }
+
+  .doc-window-bar::before {
+    display: block;
+    width: 5px;
+    height: 5px;
+    position: relative;
+    top: 7px;
+    left: 9px;
+    border-radius: 50%;
+    background: #9fadb4;
+    box-shadow: 9px 0 #c2cbd0, 18px 0 #d6dde0;
+    content: "";
+  }
+
+  .doc-ui {
+    display: grid;
+    min-height: 185px;
+    grid-template-columns: 30% 70%;
+  }
+
+  .doc-ui.grid-view { display: block; }
+
+  .doc-tree {
+    padding: 13px 10px;
+    border-right: 1px solid #e4eaec;
+    background: #fbfcfc;
+  }
+
+  .tree-title,
+  .tree-file,
+  .tree-version {
+    height: 7px;
+    margin: 0 0 11px;
+    border-radius: 3px;
+    background: #d4e0e3;
+  }
+
+  .tree-title { width: 54%; margin-bottom: 18px; background: #263941; }
+  .tree-file { width: 83%; }
+  .tree-file.active { background: #aee5e7; }
+  .tree-version { width: 64%; margin-left: 12px; background: #edf2f3; }
+
+  .doc-paper {
+    padding: 14px 16px;
+  }
+
+  .paper-title {
+    width: 47%;
+    height: 10px;
+    margin-bottom: 12px;
+    border-radius: 3px;
+    background: #263941;
+  }
+
+  .paper-line {
+    width: 86%;
+    height: 5px;
+    margin: 9px 0;
+    border-radius: 3px;
+    background: #d8e2e4;
+  }
+
+  .paper-line.short { width: 61%; }
+
+  .paper-heading {
+    width: 31%;
+    height: 7px;
+    margin: 18px 0 10px;
+    border-radius: 3px;
+    background: #7bcdd0;
+  }
+
+  .doc-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 13px;
+    border-bottom: 1px solid #e6edef;
+  }
+
+  .doc-tabs { display: flex; gap: 10px; }
+  .doc-tab { width: 36px; height: 7px; border-radius: 3px; background: #cbd8db; }
+  .doc-tab.active { background: #77cfd2; }
+  .doc-action { width: 26px; height: 18px; border-radius: 5px; background: #e3f6f6; }
+
+  .doc-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+    padding: 14px;
+  }
+
+  .doc-card {
+    min-height: 73px;
+    padding: 10px;
+    border: 1px solid #e1e9eb;
+    border-radius: 7px;
+    background: #fff;
+  }
+
+  .doc-card strong,
+  .doc-card span {
+    display: block;
+    width: 58%;
+    height: 7px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+    background: #7bcdd0;
+  }
+
+  .doc-card span { width: 84%; height: 5px; margin-bottom: 7px; background: #dce5e7; }
+
+  .doc-card small { display: block; width: 41%; height: 5px; border-radius: 3px; background: #edf1f2; }
+
+  .doc-summary {
+    margin: 0 14px 12px;
+    padding: 9px;
+    border-radius: 7px;
+    background: #f3f8f8;
+  }
+
+  .doc-summary::before,
+  .doc-summary::after {
+    display: block;
+    width: 47%;
+    height: 5px;
+    margin-bottom: 7px;
+    border-radius: 3px;
+    background: #9edcdf;
+    content: "";
+  }
+
+  .doc-summary::after { width: 75%; margin: 0; background: #d8e5e7; }
+
+  .card-body { padding: 14px 16px 16px; }
+
+  .card-body h3 { margin: 0 0 5px; color: #1f3138; font-size: 16px; }
+  .card-body p { margin: 0; color: #66777d; font-size: 12px; line-height: 1.5; }
+
+  .choice-tag {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    color: #087f87;
+    background: #e5f7f7;
+    font-size: 10px;
+    font-weight: 700;
+  }
+</style>
+
+<h2>내 문서 관리 방식</h2>
+<p class="subtitle">A안의 메인 화면 안에서 포트폴리오·이력서와 버전을 어떻게 보여줄지 선택해줘.</p>
+
+<div class="cards doc-options">
+  <div class="card" data-choice="tree-preview" onclick="toggleSelect(this)">
+    <div class="doc-preview">
+      <div class="doc-window">
+        <div class="doc-window-bar"></div>
+        <div class="doc-ui"><div class="doc-tree"><div class="tree-title"></div><div class="tree-file active"></div><div class="tree-version"></div><div class="tree-version"></div><div class="tree-file"></div><div class="tree-version"></div></div><div class="doc-paper"><div class="paper-title"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-heading"></div><div class="paper-line"></div><div class="paper-line short"></div></div></div>
+      </div>
+    </div>
+    <div class="card-body"><span class="choice-tag">추천 · 폴더 구조</span><h3>A. 문서 트리 + Markdown 미리보기</h3><p>왼쪽에서 포트폴리오·이력서와 버전을 폴더처럼 선택하고, 오른쪽에서 MD 렌더링 결과를 본다. 버전 관리 목적이 가장 분명하다.</p></div>
+  </div>
+
+  <div class="card" data-choice="cards-drawer" onclick="toggleSelect(this)">
+    <div class="doc-preview">
+      <div class="doc-window">
+        <div class="doc-window-bar"></div>
+        <div class="doc-toolbar"><div class="doc-tabs"><div class="doc-tab active"></div><div class="doc-tab"></div></div><div class="doc-action"></div></div>
+        <div class="doc-cards"><div class="doc-card"><strong></strong><span></span><small></small></div><div class="doc-card"><strong></strong><span></span><small></small></div><div class="doc-card"><strong></strong><span></span><small></small></div><div class="doc-card"><strong></strong><span></span><small></small></div></div>
+      </div>
+    </div>
+    <div class="card-body"><span class="choice-tag">탐색 쉬움</span><h3>B. 문서 카드 + 상세 Drawer</h3><p>문서를 카드로 넓게 보여주고 선택하면 상세 미리보기를 연다. 첫 화면은 편하지만 버전 이동이 한 단계 더 필요하다.</p></div>
+  </div>
+
+  <div class="card" data-choice="tabs-summary" onclick="toggleSelect(this)">
+    <div class="doc-preview">
+      <div class="doc-window">
+        <div class="doc-window-bar"></div>
+        <div class="doc-toolbar"><div class="doc-tabs"><div class="doc-tab active"></div><div class="doc-tab"></div><div class="doc-tab"></div></div><div class="doc-action"></div></div>
+        <div class="doc-summary"></div><div class="doc-paper"><div class="paper-title"></div><div class="paper-line"></div><div class="paper-line short"></div><div class="paper-heading"></div><div class="paper-line"></div></div>
+      </div>
+    </div>
+    <div class="card-body"><span class="choice-tag">간결함 우선</span><h3>C. 상단 탭 + 버전 요약</h3><p>포트폴리오·이력서를 탭으로 바꾸고 버전은 요약 영역에 둔다. 화면은 단순하지만 여러 버전 비교에는 약하다.</p></div>
+  </div>
+</div>

@@ -1,0 +1,300 @@
+<!-- Blocki 메인 화면 레이아웃 비교용 임시 와이어프레임 -->
+<style>
+  .layout-options {
+    display: grid;
+    gap: 18px;
+  }
+
+  .layout-options .card {
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid #dbe3e7;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(20, 42, 52, .06);
+    cursor: pointer;
+  }
+
+  .layout-options .card:hover,
+  .layout-options .card.selected {
+    border-color: #0aaeb8;
+    box-shadow: 0 0 0 3px rgba(10, 174, 184, .16), 0 12px 30px rgba(20, 42, 52, .1);
+  }
+
+  .preview {
+    padding: 14px;
+    background: #f5f8f9;
+  }
+
+  .browser-frame {
+    overflow: hidden;
+    min-height: 206px;
+    border: 1px solid #dfe7ea;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .browser-bar {
+    height: 20px;
+    padding-left: 9px;
+    background: #edf2f4;
+  }
+
+  .browser-bar::before {
+    display: block;
+    width: 5px;
+    height: 5px;
+    position: relative;
+    top: 7px;
+    border-radius: 50%;
+    background: #9fadb4;
+    box-shadow: 9px 0 #c2cbd0, 18px 0 #d6dde0;
+    content: "";
+  }
+
+  .app-preview {
+    display: grid;
+    min-height: 185px;
+  }
+
+  .app-preview.a { grid-template-columns: 28% 72%; }
+  .app-preview.b { grid-template-columns: 18% 55% 27%; }
+  .app-preview.c { grid-template-rows: 25% 75%; }
+
+  .rail {
+    padding: 13px 8px;
+    border-right: 1px solid #e4eaec;
+    background: #fbfcfc;
+  }
+
+  .rail-top {
+    height: 9px;
+    width: 58%;
+    margin-bottom: 17px;
+    border-radius: 3px;
+    background: #1f3138;
+  }
+
+  .rail-line {
+    height: 7px;
+    width: 82%;
+    margin: 10px 0;
+    border-radius: 3px;
+    background: #dce6e9;
+  }
+
+  .rail-line.active { background: #aee5e7; }
+
+  .rail-bottom {
+    height: 30px;
+    margin-top: 43px;
+    border-top: 1px solid #e6edef;
+    background: linear-gradient(#fff, #f8fbfb);
+  }
+
+  .main-preview {
+    padding: 15px;
+  }
+
+  .preview-heading {
+    width: 45%;
+    height: 11px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    background: #24353b;
+  }
+
+  .preview-copy {
+    width: 67%;
+    height: 6px;
+    margin-bottom: 14px;
+    border-radius: 3px;
+    background: #cbd7da;
+  }
+
+  .source-strip {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .source-chip {
+    height: 18px;
+    flex: 1;
+    border-radius: 5px;
+    background: #e5f7f7;
+  }
+
+  .document-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .document-card {
+    min-height: 67px;
+    padding: 9px;
+    border: 1px solid #e2eaec;
+    border-radius: 7px;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(30, 58, 66, .05);
+  }
+
+  .document-card::before {
+    display: block;
+    width: 42%;
+    height: 7px;
+    margin-bottom: 9px;
+    border-radius: 3px;
+    background: #8ed8db;
+    content: "";
+  }
+
+  .document-card::after {
+    display: block;
+    width: 75%;
+    height: 5px;
+    border-radius: 3px;
+    background: #dbe5e7;
+    content: "";
+  }
+
+  .status-panel {
+    padding: 13px 9px;
+    border-left: 1px solid #e4eaec;
+    background: #fcfefe;
+  }
+
+  .status-box {
+    height: 36px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background: #e9f8f8;
+  }
+
+  .status-box.muted { background: #f1f4f5; }
+
+  .top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #e7edef;
+  }
+
+  .top-nav strong { width: 20%; height: 9px; border-radius: 3px; background: #24353b; }
+  .top-nav span { width: 14%; height: 7px; border-radius: 3px; background: #d1dde0; }
+
+  .c-main {
+    display: grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: 10px;
+    padding: 13px 15px;
+  }
+
+  .hero-card {
+    min-height: 112px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #1f3138;
+  }
+
+  .hero-card::before {
+    display: block;
+    width: 48%;
+    height: 9px;
+    margin-bottom: 12px;
+    border-radius: 3px;
+    background: #70d0d3;
+    content: "";
+  }
+
+  .hero-card::after {
+    display: block;
+    width: 72%;
+    height: 6px;
+    border-radius: 3px;
+    background: #668088;
+    content: "";
+  }
+
+  .stack-card {
+    min-height: 50px;
+    margin-bottom: 9px;
+    border-radius: 8px;
+    background: #eaf7f7;
+  }
+
+  .card-body {
+    padding: 14px 16px 16px;
+  }
+
+  .card-body h3 {
+    margin: 0 0 5px;
+    color: #1f3138;
+    font-size: 16px;
+  }
+
+  .card-body p {
+    margin: 0;
+    color: #66777d;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .choice-tag {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    color: #087f87;
+    background: #e5f7f7;
+    font-size: 10px;
+    font-weight: 700;
+  }
+</style>
+
+<h2>Blocki 메인 화면 레이아웃</h2>
+<p class="subtitle">Notion 유저플로우 기준. 문서 관리와 연동 상태를 어디에 둘지 선택해줘.</p>
+
+<div class="cards layout-options">
+  <div class="card" data-choice="sidebar-documents" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="browser-frame">
+        <div class="browser-bar"></div>
+        <div class="app-preview a">
+          <div class="rail"><div class="rail-top"></div><div class="rail-line active"></div><div class="rail-line"></div><div class="rail-line"></div><div class="rail-bottom"></div></div>
+          <div class="main-preview"><div class="preview-heading"></div><div class="preview-copy"></div><div class="source-strip"><div class="source-chip"></div><div class="source-chip"></div></div><div class="document-grid"><div class="document-card"></div><div class="document-card"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><span class="choice-tag">추천 · 구조 명확</span><h3>A. 사이드바 + 문서 중심</h3><p>왼쪽에 설정·내 작업·사용자 정보. 중앙에 연동 상태와 포트폴리오·이력서 카드. Notion 설명과 가장 직접적으로 맞는다.</p></div>
+  </div>
+
+  <div class="card" data-choice="three-panel" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="browser-frame">
+        <div class="browser-bar"></div>
+        <div class="app-preview b">
+          <div class="rail"><div class="rail-top"></div><div class="rail-line active"></div><div class="rail-line"></div><div class="rail-line"></div><div class="rail-bottom"></div></div>
+          <div class="main-preview"><div class="preview-heading"></div><div class="preview-copy"></div><div class="document-grid"><div class="document-card"></div><div class="document-card"></div></div></div>
+          <div class="status-panel"><div class="status-box"></div><div class="status-box"></div><div class="status-box muted"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><span class="choice-tag">정보 밀도 높음</span><h3>B. 3패널 워크스페이스</h3><p>왼쪽 탐색, 중앙 문서, 오른쪽 연동 상태를 고정한다. 한눈에 보이지만 작은 화면에서 답답해질 수 있다.</p></div>
+  </div>
+
+  <div class="card" data-choice="top-navigation" onclick="toggleSelect(this)">
+    <div class="preview">
+      <div class="browser-frame">
+        <div class="browser-bar"></div>
+        <div class="app-preview c">
+          <div class="top-nav"><strong></strong><span></span></div>
+          <div class="c-main"><div class="hero-card"></div><div><div class="stack-card"></div><div class="stack-card"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body"><span class="choice-tag">간결함 우선</span><h3>C. 상단 탐색 + 카드 보드</h3><p>탐색을 상단으로 모으고 콘텐츠를 넓게 쓴다. 깔끔하지만 사용자 정보와 문서 버전 구조가 약해질 수 있다.</p></div>
+  </div>
+</div>
