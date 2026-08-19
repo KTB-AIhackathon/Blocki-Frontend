@@ -4,6 +4,7 @@ import { demoGeneration, demoMessages, demoSessions, demoUser, demoWorkflows } f
 
 const MOCK_DELAY_MS = 40;
 const MOCK_USER_KEY = "blocki.mockUser";
+const MOCK_REGISTERED_USER_KEY = "blocki.mockRegisteredUser";
 
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -38,6 +39,14 @@ function readSessionUser() {
   }
 }
 
+function readRegisteredUser() {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(MOCK_REGISTERED_USER_KEY)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function storeSessionUser(user) {
   if (user) {
     window.sessionStorage.setItem(MOCK_USER_KEY, JSON.stringify(user));
@@ -46,9 +55,14 @@ function storeSessionUser(user) {
   }
 }
 
+function storeRegisteredUser(user) {
+  window.sessionStorage.setItem(MOCK_REGISTERED_USER_KEY, JSON.stringify(user));
+}
+
 export function createMockApi() {
   const state = {
     user: readSessionUser(),
+    registeredUser: readRegisteredUser(),
     sessions: clone(demoSessions),
     messages: clone(demoMessages),
     workflows: clone(demoWorkflows),
@@ -115,17 +129,24 @@ export function createMockApi() {
           fieldErrors: { email: "이미 가입된 이메일입니다." },
         });
       }
-      return delay({ user: { ...demoUser, name: name.trim(), email: email.trim().toLowerCase() } });
+      state.registeredUser = {
+        ...demoUser,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+      };
+      storeRegisteredUser(state.registeredUser);
+      return delay({ user: state.registeredUser });
     },
 
     async login({ email, password }) {
       if (email.toLowerCase().includes("invalid") || password === "wrong") {
         throw apiError("INVALID_CREDENTIALS", "이메일 또는 비밀번호를 확인해주세요.");
       }
-      state.user = {
-        ...demoUser,
-        email: email.trim().toLowerCase(),
-      };
+      const normalizedEmail = email.trim().toLowerCase();
+      const registeredUser = state.registeredUser?.email === normalizedEmail
+        ? state.registeredUser
+        : demoUser;
+      state.user = { ...registeredUser, email: normalizedEmail };
       storeSessionUser(state.user);
       return delay({
         accessToken: "mock-access-token",

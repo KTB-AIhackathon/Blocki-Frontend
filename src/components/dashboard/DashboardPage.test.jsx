@@ -26,7 +26,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("1개 연결됨")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "포트폴리오" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "이력서" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "GitHub 연결됨" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "새 문서 만들기" })).not.toBeInTheDocument();
   });
@@ -37,8 +37,18 @@ describe("DashboardPage", () => {
 
     await user.click(await screen.findByRole("button", { name: "Notion 연결하기" }));
 
-    expect(await screen.findByRole("button", { name: "Notion 연결됨" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Notion 연결됨, 눌러서 연결 해제" })).toBeEnabled();
     expect(screen.getByText("2개 연결됨")).toBeInTheDocument();
+  });
+
+  it("연결됨 버튼을 누르면 연결하기 상태로 바뀐다", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.click(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" }));
+
+    expect(await screen.findByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
+    expect(screen.getByText("0개 연결됨")).toBeInTheDocument();
   });
 
   it("같은 유형의 문서를 아래로 계속 쌓아 보여준다", async () => {

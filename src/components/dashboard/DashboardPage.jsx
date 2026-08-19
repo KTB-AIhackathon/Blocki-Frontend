@@ -25,6 +25,8 @@ export default function DashboardPage() {
     missingData,
     reload,
     connectIntegration,
+    disconnectIntegration,
+    pendingIntegrationProvider,
     selectVersion,
   } = useDocumentWorkspace();
   const activeDocuments = documents.filter((document) => document.type === activeDocumentType);
@@ -61,12 +63,15 @@ export default function DashboardPage() {
               <div className="integration-action-slot">
                 {integration.status === "CONNECTED" ? (
                   <button
-                    aria-label={`${providerLabels[integration.provider]} 연결됨`}
+                    aria-label={pendingIntegrationProvider === integration.provider
+                      ? `${providerLabels[integration.provider]} 연결 해제 중`
+                      : `${providerLabels[integration.provider]} 연결됨, 눌러서 연결 해제`}
                     className="integration-action-button is-connected"
-                    disabled
+                    disabled={pendingIntegrationProvider === integration.provider}
                     type="button"
+                    onClick={() => disconnectIntegration(integration.provider)}
                   >
-                    연결됨
+                    {pendingIntegrationProvider === integration.provider ? "해제 중…" : "연결됨"}
                   </button>
                 ) : (
                   <button

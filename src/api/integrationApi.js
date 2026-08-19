@@ -37,6 +37,12 @@ export function createIntegrationApi(client = { request }, options = {}) {
       navigate(location);
       return { redirected: true, provider, location };
     },
+    async disconnectIntegration(provider) {
+      const result = await client.request(`/integrations/${provider.toLowerCase()}`, {
+        method: "DELETE",
+      });
+      return { integration: normalizeIntegration(unwrapData(result)) };
+    },
   };
 }
 

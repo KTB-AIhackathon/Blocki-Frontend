@@ -1,8 +1,12 @@
 // 명세 기반 로그인·회원가입 Mock이 실제 인증 폼 입력을 처리하는지 검증한다.
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createMockApi } from "./mockApi";
 
 describe("mock auth api", () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+  });
+
   it("로그인 사용자를 현재 브라우저 탭에서 복원한다", async () => {
     window.sessionStorage.clear();
     const firstApi = createMockApi();
@@ -25,5 +29,14 @@ describe("mock auth api", () => {
 
     expect(result.accessToken).toBe("mock-access-token");
     expect(result.user.email).toBe("new@example.com");
+  });
+
+  it("회원가입 이름을 같은 이메일 로그인 사용자에게 유지한다", async () => {
+    const api = createMockApi();
+    await api.signup({ password: "Password1", name: "임태현", email: "taehyun@example.com" });
+
+    const result = await api.login({ email: "taehyun@example.com", password: "Password1" });
+
+    expect(result.user.name).toBe("임태현");
   });
 });

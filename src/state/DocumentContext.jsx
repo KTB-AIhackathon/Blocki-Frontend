@@ -1,5 +1,5 @@
 // 문서 조회 API와 reducer를 연결해 화면에 문서·연동 상태를 제공한다.
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { getDocumentApi } from "../api/apiMode";
 import { createInitialDocumentState, documentReducer, getConnectedIntegrations } from "./documentReducer";
 
@@ -12,6 +12,7 @@ function getLatestVersionId(document) {
 
 export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad = false }) {
   const [state, dispatch] = useReducer(documentReducer, undefined, createInitialDocumentState);
+  const [pendingIntegrationProvider, setPendingIntegrationProvider] = useState(null);
 
   const reload = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
@@ -86,6 +87,21 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api]);
 
+  const disconnectIntegration = useCallback(async (provider) => {
+    setPendingIntegrationProvider(provider);
+    try {
+      const result = await api.disconnectIntegration(provider);
+      dispatch({ type: "INTEGRATION_UPDATED", integration: result.integration });
+      dispatch({ type: "SET_TOAST", message: `${provider === "GITHUB" ? "GitHub" : "Notion"} 연결을 해제했어요.` });
+      return result;
+    } catch {
+      dispatch({ type: "SET_TOAST", message: "연결을 해제하지 못했어요. 다시 시도해주세요." });
+      return null;
+    } finally {
+      setPendingIntegrationProvider(null);
+    }
+  }, [api]);
+
   const value = useMemo(() => ({
     ...state,
     connectedIntegrations: getConnectedIntegrations(state),
@@ -93,10 +109,12 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     setDocumentType,
     selectVersion,
     connectIntegration,
+    disconnectIntegration,
+    pendingIntegrationProvider,
     reload,
     clearToast,
     getLatestVersionId,
-  }), [state, setDocumentType, selectVersion, connectIntegration, reload, clearToast]);
+  }), [state, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, pendingIntegrationProvider, reload, clearToast]);
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }

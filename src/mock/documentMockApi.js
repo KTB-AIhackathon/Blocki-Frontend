@@ -133,5 +133,19 @@ export function createDocumentMockApi({ scenario = "SUCCESS", initialIntegration
       ));
       return delay({ integration });
     },
+    async disconnectIntegration(provider) {
+      const integration = {
+        provider,
+        status: "DISCONNECTED",
+        itemCount: 0,
+        accountLabel: null,
+        connectedAt: null,
+        errorCode: null,
+      };
+      state.integrations = state.integrations.map((item) => (
+        item.provider === provider ? integration : item
+      ));
+      return delay({ integration });
+    },
   };
 }

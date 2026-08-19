@@ -30,4 +30,17 @@ describe("document mock api", () => {
       { provider: "NOTION", reason: "페이지 조회에 실패했습니다." },
     ]);
   });
+
+  it("연결된 소스를 해제하면 연결 안 된 상태를 반환한다", async () => {
+    const api = createDocumentMockApi();
+
+    const result = await api.disconnectIntegration("GITHUB");
+
+    expect(result.integration).toMatchObject({
+      provider: "GITHUB",
+      status: "DISCONNECTED",
+      accountLabel: null,
+      connectedAt: null,
+    });
+  });
 });

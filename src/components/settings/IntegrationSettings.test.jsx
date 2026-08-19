@@ -1,5 +1,6 @@
-// API가 확정되기 전 설정 화면이 더미 안내만 제공하는지 검증한다.
+// 설정 화면의 읽기 전용 사용자 정보와 소스 연결 상태 변경을 검증한다.
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import IntegrationSettings from "./IntegrationSettings";
 import { DocumentProvider } from "../../state/DocumentContext";
@@ -26,9 +27,26 @@ describe("IntegrationSettings", () => {
     expect(screen.getByText("마일스")).toBeInTheDocument();
     expect(screen.getByText("miles@example.com")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "소스 연동 상태" })).toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: "GitHub 연결됨" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /저장|변경|연결 해제/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /저장|변경/ })).not.toBeInTheDocument();
+    expect(screen.queryByText("연결 해제", { exact: true })).not.toBeInTheDocument();
+  });
+
+  it("연결됨 버튼으로 소스 연결을 해제한다", async () => {
+    const user = userEvent.setup();
+    const api = createDocumentMockApi();
+    render(
+      <AuthProvider skipBootstrap initialUser={{ id: "user-1", name: "마일스", email: "miles@example.com" }}>
+        <DocumentProvider api={api}>
+          <IntegrationSettings />
+        </DocumentProvider>
+      </AuthProvider>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" }));
+
+    expect(await screen.findByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
   });
 });

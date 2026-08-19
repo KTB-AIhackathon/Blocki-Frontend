@@ -6,7 +6,12 @@ const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
 
 export default function IntegrationSettings() {
   const { user } = useAuth();
-  const { connectIntegration, integrations } = useDocumentWorkspace();
+  const {
+    connectIntegration,
+    disconnectIntegration,
+    integrations,
+    pendingIntegrationProvider,
+  } = useDocumentWorkspace();
 
   return (
     <div className="blocki-page settings-page">
@@ -53,7 +58,17 @@ export default function IntegrationSettings() {
                     <span>{connected ? integration.accountLabel ?? "연결된 계정" : "연결 안 됨"}</span>
                   </div>
                   {connected ? (
-                    <button className="integration-action-button is-connected" type="button" disabled aria-label={`${label} 연결됨`}>연결됨</button>
+                    <button
+                      aria-label={pendingIntegrationProvider === integration.provider
+                        ? `${label} 연결 해제 중`
+                        : `${label} 연결됨, 눌러서 연결 해제`}
+                      className="integration-action-button is-connected"
+                      disabled={pendingIntegrationProvider === integration.provider}
+                      type="button"
+                      onClick={() => disconnectIntegration(integration.provider)}
+                    >
+                      {pendingIntegrationProvider === integration.provider ? "해제 중…" : "연결됨"}
+                    </button>
                   ) : (
                     <button className="integration-action-button" type="button" onClick={() => connectIntegration(integration.provider)} aria-label={`${label} 연결하기`}>연결하기</button>
                   )}

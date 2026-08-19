@@ -38,4 +38,22 @@ describe("integration API specification", () => {
     expect(requestRedirect).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith("http://localhost:8080/api/v1/integrations/notion/authorize");
   });
+
+  it("연결 해제는 제공자 소문자 경로에 DELETE를 요청한다", async () => {
+    const request = vi.fn().mockResolvedValue({
+      data: {
+        provider: "GITHUB",
+        status: "NOT_CONNECTED",
+        accountLabel: null,
+        connectedAt: null,
+        errorCode: null,
+      },
+    });
+    const api = createIntegrationApi({ request });
+
+    await expect(api.disconnectIntegration("GITHUB")).resolves.toMatchObject({
+      integration: { provider: "GITHUB", status: "DISCONNECTED" },
+    });
+    expect(request).toHaveBeenCalledWith("/integrations/github", { method: "DELETE" });
+  });
 });
