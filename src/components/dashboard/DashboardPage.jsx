@@ -8,7 +8,15 @@ import ProviderLogo from "../common/ProviderLogo";
 import DocumentTypeTabs from "../documents/DocumentTypeTabs";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
-const automationDayLabels = { MONDAY: "월요일" };
+const automationDayLabels = {
+  MONDAY: "월요일",
+  TUESDAY: "화요일",
+  WEDNESDAY: "수요일",
+  THURSDAY: "목요일",
+  FRIDAY: "금요일",
+  SATURDAY: "토요일",
+  SUNDAY: "일요일",
+};
 
 function formatAutomationSchedule(schedule = {}) {
   const day = automationDayLabels[schedule.dayOfWeek] ?? schedule.dayOfWeek ?? "월요일";
@@ -64,9 +72,9 @@ export default function DashboardPage() {
     <div className="blocki-page dashboard-page">
       <header className="page-header dashboard-header">
         <div>
-          <p className="page-kicker">MY WORK / 01</p>
+          <p className="page-kicker">DASHBOARD</p>
           <h1>안녕하세요, {displayName}님.</h1>
-          <p className="page-lede">오늘의 작업 기록을 나를 설명하는 문서로 정리해보세요.</p>
+          <p className="page-lede">오늘의 작업 기록을 트래킹하고, 나를 설명하는 문서로 정리해보세요.</p>
         </div>
         <div className="dashboard-header-actions">
           <div className="document-automation-control">

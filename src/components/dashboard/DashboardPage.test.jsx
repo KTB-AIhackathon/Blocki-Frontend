@@ -128,7 +128,11 @@ describe("DashboardPage", () => {
 
     await user.click(automationToggle);
 
-    expect(api.updateDocumentGenerationAutomation).toHaveBeenCalledWith(true);
+    expect(api.updateDocumentGenerationAutomation).toHaveBeenCalledWith(true, {
+      dayOfWeek: "MONDAY",
+      time: "21:00",
+      timezone: "Asia/Seoul",
+    });
     expect(automationToggle).toHaveAttribute("aria-checked", "true");
   });
 

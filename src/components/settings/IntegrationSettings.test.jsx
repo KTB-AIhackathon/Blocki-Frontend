@@ -55,7 +55,7 @@ describe("IntegrationSettings", () => {
     expect(screen.queryByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /저장/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "저장" })).toBeDisabled();
     expect(screen.queryByText("연결 해제", { exact: true })).not.toBeInTheDocument();
   });
 

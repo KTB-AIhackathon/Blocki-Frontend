@@ -77,4 +77,25 @@ describe("document API specification", () => {
       body: { enabled: true },
     });
   });
+
+  it("문서 자동화 시간을 변경하면 enabled와 schedule을 함께 전송한다", async () => {
+    const schedule = { dayOfWeek: "WEDNESDAY", time: "09:00" };
+    const request = vi.fn().mockResolvedValue({
+      data: {
+        enabled: true,
+        schedule: { ...schedule, timezone: "Asia/Seoul" },
+      },
+    });
+    const api = createDocumentApi({ request });
+
+    await expect(api.updateDocumentGenerationAutomation(true, schedule)).resolves.toMatchObject({
+      enabled: true,
+      schedule,
+    });
+
+    expect(request).toHaveBeenCalledWith("/document-generation-automation", {
+      method: "PUT",
+      body: { enabled: true, schedule },
+    });
+  });
 });

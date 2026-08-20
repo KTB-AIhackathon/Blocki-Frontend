@@ -122,12 +122,26 @@ export function createDocumentApi(client = { request }) {
       return normalizeAutomation(unwrapData(result));
     },
 
-    async updateDocumentGenerationAutomation(enabled) {
-      const result = await client.request("/document-generation-automation", {
-        method: "PUT",
-        body: { enabled },
-      });
-      return normalizeAutomation(unwrapData(result));
+    async updateDocumentGenerationAutomation(enabled, schedule = {}) {
+      const body = { enabled };
+      if (schedule.dayOfWeek !== undefined || schedule.time !== undefined) {
+        body.schedule = {
+          ...(schedule.dayOfWeek !== undefined ? { dayOfWeek: schedule.dayOfWeek } : {}),
+          ...(schedule.time !== undefined ? { time: schedule.time } : {}),
+        };
+      }
+      console.log("[documentApi] PUT /document-generation-automation 요청", body);
+      try {
+        const result = await client.request("/document-generation-automation", {
+          method: "PUT",
+          body,
+        });
+        console.log("[documentApi] PUT /document-generation-automation 응답", result);
+        return normalizeAutomation(unwrapData(result));
+      } catch (error) {
+        console.error("[documentApi] PUT /document-generation-automation 실패", error);
+        throw error;
+      }
     },
   };
 }

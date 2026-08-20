@@ -1,6 +1,7 @@
 // 로그인 사용자 정보와 외부 소스 연결 상태를 읽기 전용으로 표시한다.
 import { useAuth } from "../../state/AuthContext";
 import { useDocumentWorkspace } from "../../state/DocumentContext";
+import AutomationScheduleSettings from "./AutomationScheduleSettings";
 import ProviderLogo from "../common/ProviderLogo";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
@@ -92,6 +93,8 @@ export default function IntegrationSettings() {
             })}
           </div>
         </section>
+
+        <AutomationScheduleSettings />
       </div>
     </div>
   );
