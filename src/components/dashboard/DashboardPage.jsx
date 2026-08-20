@@ -37,6 +37,8 @@ export default function DashboardPage() {
     .flatMap((document) => document.versions.map((version) => ({ document, version })))
     .sort((left, right) => new Date(right.version.createdAt) - new Date(left.version.createdAt));
   const displayName = user?.name ?? user?.email?.split("@")[0] ?? "작업자";
+  const canGenerateDocument = integrations.length === 2
+    && integrations.every((integration) => integration.status === "CONNECTED");
 
   return (
     <div className="blocki-page dashboard-page">
@@ -108,7 +110,7 @@ export default function DashboardPage() {
             <div className="document-generation-actions" aria-label="문서 생성">
               <button
                 className="document-generation-button"
-                disabled={pendingDocumentType !== null}
+                disabled={!canGenerateDocument || pendingDocumentType !== null}
                 type="button"
                 onClick={() => generateDocument(activeDocumentType)}
               >

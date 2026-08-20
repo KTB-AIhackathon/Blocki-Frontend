@@ -96,6 +96,7 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "문서 생성" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "문서 생성" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "이력서 생성" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "포트폴리오 생성" })).not.toBeInTheDocument();
   });
@@ -189,9 +190,15 @@ describe("DashboardPage", () => {
   it("단일 생성 버튼이 현재 선택한 탭의 문서 유형을 생성한다", async () => {
     const user = userEvent.setup();
     const api = createDocumentApiDouble();
+    api.listIntegrations = vi.fn(async () => ({ integrations: [
+      { provider: "GITHUB", status: "CONNECTED", itemCount: 4 },
+      { provider: "NOTION", status: "CONNECTED", itemCount: 2 },
+    ] }));
     renderDashboard(api);
 
-    await user.click(await screen.findByRole("button", { name: "문서 생성" }));
+    const generateButton = await screen.findByRole("button", { name: "문서 생성" });
+    expect(generateButton).toBeEnabled();
+    await user.click(generateButton);
 
     expect(api.generateDocument).toHaveBeenCalledWith("PORTFOLIO");
 
