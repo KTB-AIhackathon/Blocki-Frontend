@@ -1066,6 +1066,132 @@ body {
   white-space: nowrap;
 }
 
+.settings-section-description {
+  margin: 14px 0 0;
+  color: #6f8688;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.automation-schedule-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.automation-schedule-field {
+  display: grid;
+  gap: 6px;
+  min-width: 140px;
+}
+
+.automation-schedule-field label {
+  color: #6f8688;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.automation-schedule-field select {
+  min-height: 42px;
+  padding: 0 34px 0 12px;
+  border: 1px solid #d5e1e2;
+  border-radius: 10px;
+  color: #24484d;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2331565b' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.automation-schedule-field select:hover {
+  border-color: #a6cccd;
+  background-color: #f5fbfb;
+}
+
+.automation-schedule-field select:focus {
+  outline: 2px solid #72ded5;
+  outline-offset: 1px;
+}
+
+.automation-hour-select {
+  min-width: 104px;
+}
+
+.automation-schedule-form .button {
+  min-height: 42px;
+  padding: 0 20px;
+}
+
+.automation-schedule-saved {
+  margin: 0;
+  color: #188682;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.automation-schedule-timezone {
+  margin: 14px 0 0;
+  color: #9aaeaf;
+  font-size: 11px;
+}
+
+.automation-saved-modal {
+  width: min(420px, 100%);
+}
+
+.automation-saved-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 26px 28px 18px;
+  color: #fff;
+  background: var(--color-ink);
+}
+
+.automation-saved-modal-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 22px;
+}
+
+.automation-saved-modal-header .eyebrow {
+  color: var(--color-teal);
+}
+
+.automation-saved-modal-header > button {
+  width: 34px;
+  height: 34px;
+  color: #aab7bf;
+  background: transparent;
+  font-size: 22px;
+}
+
+.automation-saved-modal-body {
+  display: grid;
+  gap: 18px;
+  padding: 24px 28px 28px;
+}
+
+.automation-saved-modal-body p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.automation-saved-modal-body .button {
+  justify-self: start;
+  min-height: 42px;
+  padding: 0 22px;
+}
+
 @keyframes view-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

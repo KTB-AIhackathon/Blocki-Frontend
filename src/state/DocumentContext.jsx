@@ -1,5 +1,5 @@
 // 문서 조회 API와 reducer를 연결해 화면에 문서·연동 상태를 제공한다.
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { getDocumentApi } from "../api/apiMode";
 import { createInitialDocumentState, documentReducer, getConnectedIntegrations } from "./documentReducer";
 import { pollGeneration } from "./generationPolling";
@@ -35,6 +35,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
   const [pendingIntegrationProvider, setPendingIntegrationProvider] = useState(null);
   const [pendingDocumentType, setPendingDocumentType] = useState(null);
   const [pendingAutomation, setPendingAutomation] = useState(false);
+  const pendingAutomationRef = useRef(false);
 
   const reload = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
@@ -203,15 +204,28 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api, reload]);
 
-  const updateDocumentGenerationAutomation = useCallback(async (enabled) => {
+  const updateDocumentGenerationAutomation = useCallback(async (enabled, schedule) => {
     if (typeof api.updateDocumentGenerationAutomation !== "function") {
       return null;
     }
+    // 저장 버튼 연타나 토글 중복 클릭으로 PUT이 동시에 여러 번 나가는 것을 막는다.
+    // (pendingAutomation state는 비동기라 같은 틱에 두 번 호출되면 못 막을 수 있어 ref로 즉시 잠근다.)
+    if (pendingAutomationRef.current) {
+      return null;
+    }
+    pendingAutomationRef.current = true;
+    const previousEnabled = state.automation.enabled;
+    const nextSchedule = schedule ?? state.automation.schedule;
     setPendingAutomation(true);
     try {
-      const automation = await api.updateDocumentGenerationAutomation(enabled);
+      const automation = await api.updateDocumentGenerationAutomation(enabled, nextSchedule);
       dispatch({ type: "AUTOMATION_UPDATED", automation });
-      dispatch({ type: "SET_TOAST", message: enabled ? "문서 자동화를 켰어요." : "문서 자동화를 껐어요." });
+      dispatch({
+        type: "SET_TOAST",
+        message: enabled !== previousEnabled
+          ? (enabled ? "문서 자동화를 켰어요." : "문서 자동화를 껐어요.")
+          : "자동화 시간을 저장했어요.",
+      });
       return automation;
     } catch (error) {
       dispatch({
@@ -222,9 +236,10 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
       });
       return null;
     } finally {
+      pendingAutomationRef.current = false;
       setPendingAutomation(false);
     }
-  }, [api]);
+  }, [api, state.automation]);
 
   const downloadDocumentVersionPdf = useCallback(async (documentId, versionId) => {
     if (typeof api.downloadDocumentVersionPdf !== "function") {
