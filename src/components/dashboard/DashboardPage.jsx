@@ -4,6 +4,7 @@ import { useDocumentWorkspace } from "../../state/DocumentContext";
 import { navigateTo, ROUTES } from "../../routing/appRouter";
 import DataNotice from "../common/DataNotice";
 import Icon from "../common/Icon";
+import ProviderLogo from "../common/ProviderLogo";
 import DocumentTypeTabs from "../documents/DocumentTypeTabs";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
@@ -103,7 +104,12 @@ export default function DashboardPage() {
         <div className="integration-summary-grid">
           {integrations.map((integration) => (
             <div className={`integration-summary-card ${integration.status === "CONNECTED" ? "is-connected" : ""}`} key={integration.provider}>
-              <div className="integration-provider-mark" aria-hidden="true">{integration.provider === "GITHUB" ? "GH" : "N"}</div>
+              <div
+                className={`integration-provider-mark is-${integration.provider.toLowerCase()}`}
+                aria-hidden="true"
+              >
+                <ProviderLogo provider={integration.provider} />
+              </div>
               <div>
                 <strong>{providerLabels[integration.provider]}</strong>
                 <span>{integration.status === "CONNECTED"

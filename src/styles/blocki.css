@@ -2466,3 +2466,43 @@ body {
     transition: none;
   }
 }
+
+/* 외부 소스 표시는 문자 약어 대신 일관된 단색 로고로 구분한다. */
+.integration-provider-mark .provider-logo {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.integration-provider-mark.is-github,
+.integration-summary-card.is-connected .integration-provider-mark.is-github,
+.settings-integration-card.is-connected .integration-provider-mark.is-github {
+  color: #24292f;
+  background: #eef1f4;
+}
+
+.integration-provider-mark.is-notion,
+.integration-summary-card.is-connected .integration-provider-mark.is-notion,
+.settings-integration-card.is-connected .integration-provider-mark.is-notion {
+  color: #191919;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(25, 25, 25, 0.12);
+}
+
+.integration-provider-mark .provider-logo-fallback {
+  margin: 0;
+  color: currentColor;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* 연동 버튼의 시각 밀도를 보강한다. */
+.integration-action-button,
+.settings-integration-card .integration-change-button {
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+
+.dashboard-page .document-tabs-row + .data-notice {
+  margin-top: var(--ds-space-4);
+}

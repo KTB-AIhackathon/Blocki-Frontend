@@ -1,6 +1,7 @@
 // 로그인 사용자 정보와 외부 소스 연결 상태를 읽기 전용으로 표시한다.
 import { useAuth } from "../../state/AuthContext";
 import { useDocumentWorkspace } from "../../state/DocumentContext";
+import ProviderLogo from "../common/ProviderLogo";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
 
@@ -52,7 +53,12 @@ export default function IntegrationSettings() {
               const connected = integration.status === "CONNECTED";
               return (
                 <div className={`settings-integration-card ${connected ? "is-connected" : ""}`} key={integration.provider}>
-                  <div className="integration-provider-mark" aria-hidden="true">{integration.provider === "GITHUB" ? "GH" : "N"}</div>
+                  <div
+                    className={`integration-provider-mark is-${integration.provider.toLowerCase()}`}
+                    aria-hidden="true"
+                  >
+                    <ProviderLogo provider={integration.provider} />
+                  </div>
                   <div className="settings-integration-copy">
                     <strong>{label}</strong>
                     <span>{connected ? integration.accountLabel ?? "연결된 계정" : "연결 안 됨"}</span>
