@@ -47,6 +47,64 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      <section className="documents-panel" aria-labelledby="documents-heading">
+        <div className="section-heading-row documents-heading-row">
+          <div>
+            <p className="section-kicker">DOCUMENTS</p>
+            <h2 id="documents-heading">나의 문서</h2>
+          </div>
+          <div className="document-controls">
+            <div className="document-generation-actions" aria-label="문서 생성">
+              <button
+                className="document-generation-button"
+                disabled={pendingDocumentType !== null}
+                type="button"
+                onClick={() => generateDocument(activeDocumentType)}
+              >
+                {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
+              </button>
+            </div>
+            <DocumentTypeTabs navigateOnChange={false} />
+          </div>
+        </div>
+
+        {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={reload} /> : null}
+
+        {activeDocumentVersions.length > 0 ? (
+          <div className="document-list" key={activeDocumentType}>
+            {activeDocumentVersions.map(({ document, version }) => {
+              return (
+                <article className="document-card" key={`${document.id}-${version.id}`}>
+                  <div className="document-card-mark" aria-hidden="true">{document.type === "PORTFOLIO" ? "✦" : "↗"}</div>
+                  <div className="document-card-copy">
+                    <p className="document-type-label">{document.type === "PORTFOLIO" ? "PORTFOLIO" : "RESUME"}</p>
+                    <h3>{document.title} v{version.versionNumber}</h3>
+                    <p>{version.id === document.latestVersionId ? "최신 버전" : "이전 버전"} · {formatDate(version.createdAt)}</p>
+                  </div>
+                  <button
+                    className="button button-outline compact-button"
+                    type="button"
+                    onClick={() => {
+                      selectVersion(document, version);
+                      navigateTo(ROUTES.DOCUMENTS);
+                    }}
+                  >
+                    문서 열기 <span aria-hidden="true">↗</span>
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-document-card">
+            <strong>아직 {activeDocumentType === "PORTFOLIO" ? "포트폴리오" : "이력서"}가 없어요.</strong>
+            <p>연결된 서비스에서 문서가 생성되면 이곳에 표시돼요.</p>
+          </div>
+        )}
+
+        <p className="dashboard-footnote">연동된 데이터에서 만들어진 문서는 기존 버전과 함께 보관돼요.</p>
+      </section>
+
       <section className="scope-panel" aria-labelledby="scope-heading">
         <div className="section-heading-row">
           <div>
@@ -95,64 +153,6 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={reload} /> : null}
-
-      <section className="documents-panel" aria-labelledby="documents-heading">
-        <div className="section-heading-row documents-heading-row">
-          <div>
-            <p className="section-kicker">DOCUMENTS</p>
-            <h2 id="documents-heading">나의 문서</h2>
-          </div>
-          <div className="document-controls">
-            <div className="document-generation-actions" aria-label="문서 생성">
-              <button
-                className="document-generation-button"
-                disabled={pendingDocumentType !== null}
-                type="button"
-                onClick={() => generateDocument(activeDocumentType)}
-              >
-                {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
-              </button>
-            </div>
-            <DocumentTypeTabs navigateOnChange={false} />
-          </div>
-        </div>
-
-        {activeDocumentVersions.length > 0 ? (
-          <div className="document-list" key={activeDocumentType}>
-            {activeDocumentVersions.map(({ document, version }) => {
-              return (
-                <article className="document-card" key={`${document.id}-${version.id}`}>
-                  <div className="document-card-mark" aria-hidden="true">{document.type === "PORTFOLIO" ? "✦" : "↗"}</div>
-                  <div className="document-card-copy">
-                    <p className="document-type-label">{document.type === "PORTFOLIO" ? "PORTFOLIO" : "RESUME"}</p>
-                    <h3>{document.title} v{version.versionNumber}</h3>
-                    <p>{version.id === document.latestVersionId ? "최신 버전" : "이전 버전"} · {formatDate(version.createdAt)}</p>
-                  </div>
-                  <button
-                    className="button button-outline compact-button"
-                    type="button"
-                    onClick={() => {
-                      selectVersion(document, version);
-                      navigateTo(ROUTES.DOCUMENTS);
-                    }}
-                  >
-                    문서 열기 <span aria-hidden="true">↗</span>
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="empty-document-card">
-            <strong>아직 {activeDocumentType === "PORTFOLIO" ? "포트폴리오" : "이력서"}가 없어요.</strong>
-            <p>연결된 서비스에서 문서가 생성되면 이곳에 표시돼요.</p>
-          </div>
-        )}
-
-        <p className="dashboard-footnote">연동된 데이터에서 만들어진 문서는 기존 버전과 함께 보관돼요.</p>
       </section>
     </div>
   );
