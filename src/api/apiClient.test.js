@@ -54,12 +54,12 @@ describe("apiClient", () => {
   });
 
   it("PDF 응답을 Blob으로 반환한다", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response("%PDF-1.7", {
-        status: 200,
-        headers: { "Content-Type": "application/pdf" },
-      }),
-    );
+    const response = new Response("%PDF-1.7", {
+      status: 200,
+      headers: { "Content-Type": "application/pdf" },
+    });
+    const blobSpy = vi.spyOn(response, "blob");
+    const fetchMock = vi.fn().mockResolvedValue(response);
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await request("/documents/doc-1/versions/version-2/pdf", {
@@ -67,9 +67,9 @@ describe("apiClient", () => {
       responseType: "blob",
     });
 
-    expect(result).toBeInstanceOf(Blob);
     expect(result.type).toBe("application/pdf");
     expect(result.size).toBe(8);
+    expect(blobSpy).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/documents/doc-1/versions/version-2/pdf");
     expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ Accept: "application/pdf" });
   });
