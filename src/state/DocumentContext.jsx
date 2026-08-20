@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import { getDocumentApi } from "../api/apiMode";
 import { createInitialDocumentState, documentReducer, getConnectedIntegrations } from "./documentReducer";
 import { pollGeneration } from "./generationPolling";
+import { generationToast } from "./generationToast";
 
 const defaultDocumentApi = getDocumentApi();
 const DocumentContext = createContext(null);
@@ -294,12 +295,6 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api]);
 
-  const generationToast = useCallback((documentType, status) => (
-    status === "PARTIALLY_SUCCEEDED"
-      ? "문서를 생성했지만 일부 데이터가 누락됐어요."
-      : `${documentType === "RESUME" ? "이력서" : "포트폴리오"}를 생성했어요.`
-  ), []);
-
   const generateDocument = useCallback(async (documentType) => {
     setPendingDocumentType(documentType);
     setDocumentType(documentType);
@@ -317,7 +312,10 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
         result = await api.getDocumentGeneration(queued.id).catch(() => null);
         await reload();
         if (result && ["SUCCEEDED", "PARTIALLY_SUCCEEDED"].includes(result.status)) {
-          dispatch({ type: "SET_TOAST", message: generationToast(documentType, result.status) });
+          dispatch({
+            type: "SET_TOAST",
+            message: generationToast(documentType, result.status, result.missingSources),
+          });
           return result;
         }
         dispatch({
@@ -332,7 +330,10 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
         });
       }
       await reload();
-      dispatch({ type: "SET_TOAST", message: generationToast(documentType, result.status) });
+      dispatch({
+        type: "SET_TOAST",
+        message: generationToast(documentType, result.status, result.missingSources),
+      });
       return result;
     } catch (error) {
       dispatch({ type: "SET_TOAST", message: error.message ?? "문서를 생성하지 못했어요. 다시 시도해주세요." });
@@ -340,7 +341,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     } finally {
       setPendingDocumentType(null);
     }
-  }, [api, generationToast, reload, setDocumentType]);
+  }, [api, reload, setDocumentType]);
 
   const dataNoticeView = useMemo(() => {
     const disconnectedData = state.loadStatus === "READY" ? getDisconnectedData(state.integrations) : [];
