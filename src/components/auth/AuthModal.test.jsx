@@ -7,7 +7,6 @@ import AuthModal from "./AuthModal";
 
 function renderAuth(customApi = {}) {
   const api = {
-    mode: "mock",
     getCurrentUser: vi.fn().mockResolvedValue(null),
     login: vi.fn().mockResolvedValue({ user: { id: "user-1", email: "demo@example.com" } }),
     signup: vi.fn().mockResolvedValue({ user: { id: "user-1" } }),

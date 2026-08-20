@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 export const ROUTES = Object.freeze({
   LOGIN: "/login",
   SIGNUP: "/signup",
+  OAUTH_CALLBACK: "/oauth/callback",
   WORKSPACE: "/workspace",
   DOCUMENTS: "/documents",
   SETTINGS: "/settings",
@@ -38,7 +39,7 @@ export function useAppPathname() {
 }
 
 export function isPublicRoute(pathname) {
-  return pathname === ROUTES.LOGIN || pathname === ROUTES.SIGNUP;
+  return pathname === ROUTES.LOGIN || pathname === ROUTES.SIGNUP || pathname === ROUTES.OAUTH_CALLBACK;
 }
 
 export function isPrivateRoute(pathname) {

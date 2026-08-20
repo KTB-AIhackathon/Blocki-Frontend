@@ -29,4 +29,18 @@ describe("pollGeneration", () => {
       }),
     ).rejects.toMatchObject({ code: "GENERATION_TIMEOUT", retryable: true });
   });
+
+  it("부분 성공도 백엔드 문서 생성의 terminal 상태로 처리한다", async () => {
+    const getGeneration = vi.fn().mockResolvedValue({
+      id: "generation-1",
+      status: "PARTIALLY_SUCCEEDED",
+      missingSources: ["NOTION"],
+    });
+    const sleep = vi.fn();
+
+    await expect(
+      pollGeneration("generation-1", { getGeneration, sleep }),
+    ).resolves.toMatchObject({ status: "PARTIALLY_SUCCEEDED" });
+    expect(sleep).not.toHaveBeenCalled();
+  });
 });

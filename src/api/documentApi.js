@@ -1,13 +1,13 @@
 // 명세의 문서 목록·버전 응답을 화면용 문서 adapter로 변환한다.
-import { request } from "./apiClient";
+import { createIdempotencyKey, request } from "./apiClient";
 
 function unwrapData(result) {
   return result?.data ?? result ?? {};
 }
 
-function normalizeVersion(version = {}, documentId = version.documentId) {
+function normalizeVersion(version = {}, documentId = version.documentId, versionId = version.id) {
   return {
-    id: version.id,
+    id: versionId,
     documentId,
     type: version.type,
     title: version.title,
@@ -49,7 +49,7 @@ export function createDocumentApi(client = { request }) {
     const result = options.signal
       ? await client.request(path, { signal: options.signal })
       : await client.request(path);
-    return normalizeVersion(unwrapData(result), documentId);
+    return normalizeVersion(unwrapData(result), documentId, versionId);
   }
 
   return {
@@ -80,6 +80,23 @@ export function createDocumentApi(client = { request }) {
     },
 
     getDocumentVersion,
+
+    async generateDocument(type, idempotencyKey = createIdempotencyKey()) {
+      const result = await client.request("/documents/generations", {
+        method: "POST",
+        body: { type },
+        idempotencyKey,
+      });
+      return unwrapData(result);
+    },
+
+    async getDocumentGeneration(jobId, options = {}) {
+      const path = `/document-generation-jobs/${jobId}`;
+      const result = options.signal
+        ? await client.request(path, { signal: options.signal })
+        : await client.request(path);
+      return unwrapData(result);
+    },
   };
 }
 

@@ -115,7 +115,7 @@ describe("calendar drag and drop", () => {
 
   it("moves blocks in both directions while preserving the duration for an authenticated user", async () => {
     const user = { id: "user-1", email: "demo@example.com" };
-    const api = { mode: "mock" };
+    const api = {};
     renderDropHarness({ api, initialUser: user });
 
     fireEvent.click(screen.getByRole("button", { name: "달력에서 보관" }));
@@ -127,7 +127,7 @@ describe("calendar drag and drop", () => {
   });
 
   it("opens the login modal instead of mutating when a guest drops a block", () => {
-    renderDropHarness({ api: { mode: "mock" } });
+    renderDropHarness({ api: {} });
 
     fireEvent.click(screen.getByRole("button", { name: "달력에서 보관" }));
 
@@ -138,7 +138,6 @@ describe("calendar drag and drop", () => {
   it("rolls back the optimistic schedule when the API reports a revision conflict", async () => {
     const user = userEvent.setup();
     const api = {
-      mode: "api",
       moveBlock: vi.fn().mockRejectedValue({ code: "WORKFLOW_REVISION_CONFLICT" }),
     };
     renderDropHarness({ api, initialUser: { id: "user-1" } });

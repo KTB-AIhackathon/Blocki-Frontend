@@ -21,6 +21,19 @@ const baseDocument = {
 };
 
 describe("documentReducer", () => {
+  it("연동 조회 결과가 없어도 GitHub와 Notion 연결 항목을 유지한다", () => {
+    const state = documentReducer(createInitialDocumentState(), {
+      type: "LOAD_SUCCESS",
+      integrations: [],
+      documents: [],
+    });
+
+    expect(state.integrations).toEqual([
+      { provider: "GITHUB", status: "DISCONNECTED", itemCount: 0 },
+      { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
+    ]);
+  });
+
   it("연결된 서비스만 현재 수집 범위로 반환한다", () => {
     const state = documentReducer(createInitialDocumentState(), {
       type: "LOAD_SUCCESS",

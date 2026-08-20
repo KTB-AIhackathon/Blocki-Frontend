@@ -70,7 +70,15 @@ export default function IntegrationSettings() {
                       {pendingIntegrationProvider === integration.provider ? "해제 중…" : "연결됨"}
                     </button>
                   ) : (
-                    <button className="integration-action-button" type="button" onClick={() => connectIntegration(integration.provider)} aria-label={`${label} 연결하기`}>연결하기</button>
+                    <button
+                      aria-label={pendingIntegrationProvider === integration.provider ? `${label} 연결 중` : `${label} 연결하기`}
+                      className="integration-action-button"
+                      disabled={pendingIntegrationProvider === integration.provider}
+                      type="button"
+                      onClick={() => connectIntegration(integration.provider)}
+                    >
+                      {pendingIntegrationProvider === integration.provider ? "연결 중…" : "연결하기"}
+                    </button>
                   )}
                 </div>
               );

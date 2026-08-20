@@ -8,7 +8,7 @@ const labels = {
   [DOCUMENT_TYPES.RESUME]: "이력서",
 };
 
-export default function DocumentTypeTabs() {
+export default function DocumentTypeTabs({ navigateOnChange = true }) {
   const { activeDocumentType, setDocumentType } = useDocumentWorkspace();
 
   return (
@@ -20,7 +20,9 @@ export default function DocumentTypeTabs() {
           key={documentType}
           onClick={() => {
             setDocumentType(documentType);
-            navigateTo(ROUTES.DOCUMENTS);
+            if (navigateOnChange) {
+              navigateTo(ROUTES.DOCUMENTS);
+            }
           }}
           role="tab"
           type="button"

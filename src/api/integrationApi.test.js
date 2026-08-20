@@ -23,20 +23,30 @@ describe("integration API specification", () => {
     expect(request).toHaveBeenCalledWith("/integrations");
   });
 
-  it("연결 시작은 fetch 없이 백엔드 authorize 주소로 브라우저를 이동한다", async () => {
-    const requestRedirect = vi.fn(() => Promise.reject(new Error("fetch를 호출하면 안 됩니다.")));
-    const navigate = vi.fn();
-    const buildApiUrl = vi.fn((path) => `http://localhost:8080/api/v1${path}`);
-    const api = createIntegrationApi({ request: vi.fn(), requestRedirect }, { buildApiUrl, navigate });
+  it("연결 시작은 인증된 요청으로 OAuth URL을 받아 팝업을 이동한다", async () => {
+    const request = vi.fn().mockResolvedValue({
+      data: { authorizeUrl: "https://github.com/login/oauth/authorize?client_id=client" },
+    });
+    const popup = { close: vi.fn(), location: { replace: vi.fn() } };
+    const openPopup = vi.fn().mockReturnValue(popup);
+    const api = createIntegrationApi({ request }, { openPopup });
 
-    await expect(api.connectIntegration("NOTION")).resolves.toEqual({
-      redirected: true,
-      provider: "NOTION",
-      location: "http://localhost:8080/api/v1/integrations/notion/authorize",
+    await expect(api.connectIntegration("GITHUB")).resolves.toEqual({
+      popupOpened: true,
+      provider: "GITHUB",
     });
 
-    expect(requestRedirect).not.toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith("http://localhost:8080/api/v1/integrations/notion/authorize");
+    expect(request).toHaveBeenCalledWith("/integrations/github/authorize-url", { method: "POST" });
+    expect(openPopup).toHaveBeenCalledWith("GITHUB");
+    expect(popup.location.replace).toHaveBeenCalledWith("https://github.com/login/oauth/authorize?client_id=client");
+  });
+
+  it("팝업이 차단되면 API를 요청하지 않고 명확한 오류를 반환한다", async () => {
+    const request = vi.fn();
+    const api = createIntegrationApi({ request }, { openPopup: vi.fn().mockReturnValue(null) });
+
+    await expect(api.connectIntegration("NOTION")).rejects.toMatchObject({ code: "OAUTH_POPUP_BLOCKED" });
+    expect(request).not.toHaveBeenCalled();
   });
 
   it("연결 해제는 제공자 소문자 경로에 DELETE를 요청한다", async () => {

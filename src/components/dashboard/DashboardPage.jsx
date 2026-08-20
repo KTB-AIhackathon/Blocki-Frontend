@@ -27,9 +27,14 @@ export default function DashboardPage() {
     connectIntegration,
     disconnectIntegration,
     pendingIntegrationProvider,
+    generateDocument,
+    pendingDocumentType,
     selectVersion,
   } = useDocumentWorkspace();
   const activeDocuments = documents.filter((document) => document.type === activeDocumentType);
+  const activeDocumentVersions = activeDocuments
+    .flatMap((document) => document.versions.map((version) => ({ document, version })))
+    .sort((left, right) => new Date(right.version.createdAt) - new Date(left.version.createdAt));
   const displayName = user?.name ?? user?.email?.split("@")[0] ?? "작업자";
 
   return (
@@ -75,12 +80,15 @@ export default function DashboardPage() {
                   </button>
                 ) : (
                   <button
-                    aria-label={`${providerLabels[integration.provider]} 연결하기`}
+                    aria-label={pendingIntegrationProvider === integration.provider
+                      ? `${providerLabels[integration.provider]} 연결 중`
+                      : `${providerLabels[integration.provider]} 연결하기`}
                     className="integration-action-button"
+                    disabled={pendingIntegrationProvider === integration.provider}
                     type="button"
                     onClick={() => connectIntegration(integration.provider)}
                   >
-                    연결하기
+                    {pendingIntegrationProvider === integration.provider ? "연결 중…" : "연결하기"}
                   </button>
                 )}
               </div>
@@ -97,29 +105,38 @@ export default function DashboardPage() {
             <p className="section-kicker">DOCUMENTS</p>
             <h2 id="documents-heading">나의 문서</h2>
           </div>
-          <DocumentTypeTabs />
+          <div className="document-controls">
+            <div className="document-generation-actions" aria-label="문서 생성">
+              <button
+                className="document-generation-button"
+                disabled={pendingDocumentType !== null}
+                type="button"
+                onClick={() => generateDocument(activeDocumentType)}
+              >
+                {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
+              </button>
+            </div>
+            <DocumentTypeTabs navigateOnChange={false} />
+          </div>
         </div>
 
-        {activeDocuments.length > 0 ? (
+        {activeDocumentVersions.length > 0 ? (
           <div className="document-list" key={activeDocumentType}>
-            {activeDocuments.map((document) => {
-              const latestVersion = document.versions.find((item) => item.id === document.latestVersionId) ?? document.versions.at(-1);
+            {activeDocumentVersions.map(({ document, version }) => {
               return (
-                <article className="document-card" key={document.id}>
+                <article className="document-card" key={`${document.id}-${version.id}`}>
                   <div className="document-card-mark" aria-hidden="true">{document.type === "PORTFOLIO" ? "✦" : "↗"}</div>
                   <div className="document-card-copy">
                     <p className="document-type-label">{document.type === "PORTFOLIO" ? "PORTFOLIO" : "RESUME"}</p>
-                    <h3>{document.title}</h3>
-                    <p>최근 버전 v{latestVersion?.versionNumber ?? 1} · {formatDate(latestVersion?.createdAt)}</p>
+                    <h3>{document.title} v{version.versionNumber}</h3>
+                    <p>{version.id === document.latestVersionId ? "최신 버전" : "이전 버전"} · {formatDate(version.createdAt)}</p>
                   </div>
                   <button
                     className="button button-outline compact-button"
                     type="button"
                     onClick={() => {
-                      if (latestVersion) {
-                        selectVersion(document, latestVersion);
-                        navigateTo(ROUTES.DOCUMENTS);
-                      }
+                      selectVersion(document, version);
+                      navigateTo(ROUTES.DOCUMENTS);
                     }}
                   >
                     문서 열기 <span aria-hidden="true">↗</span>

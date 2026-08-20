@@ -1,6 +1,36 @@
 // 명세의 회원가입·로그인·내 정보 API를 인증 화면 계약으로 변환한다.
 import { request, setAccessToken, resetApiAuth } from "./apiClient";
 
+const AUTH_SESSION_KEY = "blocki.authSession";
+
+function getSessionStorage() {
+  return typeof window === "undefined" ? null : window.sessionStorage;
+}
+
+function storeAuthSession(user, expiresAt) {
+  getSessionStorage()?.setItem(AUTH_SESSION_KEY, JSON.stringify({ user, expiresAt }));
+}
+
+function clearAuthSession() {
+  getSessionStorage()?.removeItem(AUTH_SESSION_KEY);
+}
+
+function readAuthSession() {
+  try {
+    const session = JSON.parse(getSessionStorage()?.getItem(AUTH_SESSION_KEY) ?? "null");
+    if (!session?.user || !session.expiresAt || Date.parse(session.expiresAt) <= Date.now()) {
+      clearAuthSession();
+      resetApiAuth();
+      return null;
+    }
+    return normalizeUser(session.user);
+  } catch {
+    clearAuthSession();
+    resetApiAuth();
+    return null;
+  }
+}
+
 function normalizeUser(result) {
   const user = result?.user ?? result?.data?.user ?? result;
   if (!user) {
@@ -19,7 +49,7 @@ function unwrapData(result) {
 export function createAuthApi(client = { request }) {
   return {
     getCurrentUser() {
-      return client.request("/users/me").then((result) => normalizeUser(unwrapData(result)));
+      return Promise.resolve(readAuthSession());
     },
 
     signup(payload) {
@@ -30,12 +60,15 @@ export function createAuthApi(client = { request }) {
     login(payload) {
       return client.request("/auth/login", { method: "POST", body: payload, auth: false }).then((result) => {
         const data = unwrapData(result);
+        const user = normalizeUser(data.user);
         setAccessToken(data.accessToken);
-        return { ...data, user: normalizeUser(data.user) };
+        storeAuthSession(user, data.expiresAt);
+        return { ...data, user };
       });
     },
 
     logout() {
+      clearAuthSession();
       resetApiAuth();
       return Promise.resolve({ ok: true });
     },

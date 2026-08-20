@@ -3,6 +3,7 @@ dist
 coverage
 .env
 .DS_Store
+.superpowers/
 AGENTS.md
 docs/api-specification.md
 docs/backend-directory-structure.md

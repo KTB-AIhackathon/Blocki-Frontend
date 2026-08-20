@@ -6,6 +6,7 @@ import { resetApiAuth } from "./apiClient";
 describe("auth API specification", () => {
   beforeEach(() => {
     resetApiAuth();
+    window.sessionStorage.clear();
   });
 
   it("회원가입은 /auth/sign-up에 명세 DTO를 보낸다", async () => {
@@ -38,7 +39,7 @@ describe("auth API specification", () => {
       data: {
         accessToken: "token-1",
         tokenType: "Bearer",
-        expiresAt: "2026-08-19T10:00:00Z",
+        expiresAt: "2099-08-19T10:00:00Z",
         user: { id: "user-1", name: "김블로", email: "blocki@example.com" },
       },
     });
@@ -53,11 +54,21 @@ describe("auth API specification", () => {
     });
   });
 
-  it("현재 사용자는 /users/me에서 조회한다", async () => {
-    const request = vi.fn().mockResolvedValue({ data: { id: "user-1", email: "blocki@example.com" } });
+  it("백엔드에 없는 /users/me를 호출하지 않고 로그인 응답의 사용자를 복원한다", async () => {
+    const request = vi.fn().mockResolvedValue({
+      data: {
+        accessToken: "token-1",
+        tokenType: "Bearer",
+        expiresAt: "2099-08-19T10:00:00Z",
+        user: { id: "user-1", name: "임태현", email: "blocki@example.com" },
+      },
+    });
     const api = createAuthApi({ request });
 
-    await expect(api.getCurrentUser()).resolves.toMatchObject({ id: "user-1", email: "blocki@example.com" });
-    expect(request).toHaveBeenCalledWith("/users/me");
+    await api.login({ email: "blocki@example.com", password: "example-password" });
+    request.mockClear();
+
+    await expect(api.getCurrentUser()).resolves.toMatchObject({ id: "user-1", name: "임태현" });
+    expect(request).not.toHaveBeenCalled();
   });
 });

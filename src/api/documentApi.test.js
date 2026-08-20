@@ -19,10 +19,33 @@ describe("document API specification", () => {
   });
 
   it("특정 버전 조회 결과를 Markdown 미리보기 구조로 변환한다", async () => {
-    const request = vi.fn().mockResolvedValue({ data: { id: "version-1", type: "RESUME", title: "이력서", version: 2, markdown: "# 이력서", createdAt: "2026-08-19T09:00:00Z" } });
+    const request = vi.fn().mockResolvedValue({ data: { id: "doc-1", type: "RESUME", title: "이력서", version: 2, markdown: "# 이력서", createdAt: "2026-08-19T09:00:00Z" } });
     const api = createDocumentApi({ request });
 
     await expect(api.getDocumentVersion("doc-1", "version-1")).resolves.toMatchObject({ id: "version-1", markdown: "# 이력서", versionNumber: 2 });
     expect(request).toHaveBeenCalledWith("/documents/doc-1/versions/version-1");
+  });
+
+  it("문서 유형별 생성 작업을 요청하고 작업 상태를 조회한다", async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce({ data: { id: "job-1", status: "QUEUED", type: "DOCUMENT_GENERATION" } })
+      .mockResolvedValueOnce({ data: { id: "job-1", status: "SUCCEEDED", documentId: "doc-1", versionId: "version-2" } });
+    const api = createDocumentApi({ request });
+
+    await expect(api.generateDocument("RESUME", "request-key-1")).resolves.toMatchObject({
+      id: "job-1",
+      status: "QUEUED",
+    });
+    await expect(api.getDocumentGeneration("job-1")).resolves.toMatchObject({
+      status: "SUCCEEDED",
+      versionId: "version-2",
+    });
+
+    expect(request).toHaveBeenNthCalledWith(1, "/documents/generations", {
+      method: "POST",
+      body: { type: "RESUME" },
+      idempotencyKey: "request-key-1",
+    });
+    expect(request).toHaveBeenNthCalledWith(2, "/document-generation-jobs/job-1");
   });
 });
