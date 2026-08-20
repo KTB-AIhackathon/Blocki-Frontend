@@ -2,6 +2,7 @@
 import { useDocumentWorkspace } from "../../state/DocumentContext";
 import { navigateTo, ROUTES } from "../../routing/appRouter";
 import DataNotice from "../common/DataNotice";
+import Icon from "../common/Icon";
 import DocumentTypeTabs from "./DocumentTypeTabs";
 import MarkdownPreview from "./MarkdownPreview";
 
@@ -28,7 +29,7 @@ export default function DocumentWorkspace() {
     <div className="blocki-page document-page">
       <header className="page-header document-page-header">
         <div>
-          <button className="back-link" type="button" onClick={() => navigateTo(ROUTES.WORKSPACE)}>← 내 작업</button>
+          <button className="back-link" type="button" onClick={() => navigateTo(ROUTES.WORKSPACE)}><Icon name="arrow-left" size={16} /> 내 작업</button>
           <p className="page-kicker">DOCUMENT ARCHIVE</p>
           <h1>{activeDocument?.title ?? (activeDocumentType === "PORTFOLIO" ? "포트폴리오" : "이력서")}</h1>
         </div>
@@ -66,7 +67,7 @@ export default function DocumentWorkspace() {
 
         <section className="document-preview-panel" aria-label="Markdown 미리보기">
           <div className="document-preview-toolbar">
-            <span className="read-only-label"><span aria-hidden="true">◉</span> 읽기 전용 미리보기</span>
+            <span className="read-only-label"><Icon name="eye" size={15} /> 읽기 전용 미리보기</span>
             {selectedVersion ? <span>v{selectedVersion.versionNumber} · {formatVersionDate(selectedVersion.createdAt)}</span> : null}
           </div>
           {selectedVersion ? <MarkdownPreview markdown={selectedVersion.markdown} /> : <p className="empty-document">문서를 불러오는 중이에요.</p>}

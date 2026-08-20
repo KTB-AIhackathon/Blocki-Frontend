@@ -1,4 +1,6 @@
 // 기록 부족과 일부 조회 실패를 같은 시각 언어로 안내한다.
+import Icon from "./Icon";
+
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
 
 export default function DataNotice({ type, missingData = [], onRetry }) {
@@ -9,7 +11,7 @@ export default function DataNotice({ type, missingData = [], onRetry }) {
   const isPartial = type === "PARTIAL_DATA";
   return (
     <section className={`data-notice ${isPartial ? "is-partial" : "is-insufficient"}`} role="status">
-      <div className="data-notice-icon" aria-hidden="true">{isPartial ? "!" : "○"}</div>
+      <div className="data-notice-icon"><Icon name="circle-alert" size={17} /></div>
       <div className="data-notice-copy">
         <strong>{isPartial ? "누락된 데이터가 있어요" : "오늘 기록이 부족합니다"}</strong>
         <p>
