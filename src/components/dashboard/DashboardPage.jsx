@@ -30,10 +30,12 @@ export default function DashboardPage() {
     connectIntegration,
     disconnectIntegration,
     pendingIntegrationProvider,
-    generateDocument,
+    generateBothDocuments,
     pendingDocumentType,
     selectVersion,
   } = useDocumentWorkspace();
+  const otherDocumentType = activeDocumentType === "PORTFOLIO" ? "RESUME" : "PORTFOLIO";
+  const otherDocumentExists = documents.some((document) => document.type === otherDocumentType);
   const activeDocuments = documents.filter((document) => document.type === activeDocumentType);
   const activeDocumentVersions = activeDocuments
     .flatMap((document) => document.versions.map((version) => ({ document, version })))
@@ -124,9 +126,9 @@ export default function DashboardPage() {
               className="document-generation-button"
               disabled={!canGenerateDocument || pendingDocumentType !== null}
               type="button"
-              onClick={() => generateDocument(activeDocumentType)}
+              onClick={() => generateBothDocuments()}
             >
-              {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
+              {pendingDocumentType !== null ? "문서 생성 중…" : "이력서와 포트폴리오 생성"}
             </button>
           </div>
         </div>
@@ -164,11 +166,18 @@ export default function DashboardPage() {
         ) : (
           <div className="empty-document-card">
             <strong>아직 {activeDocumentType === "PORTFOLIO" ? "포트폴리오" : "이력서"}가 없어요.</strong>
-            <p>연결된 서비스에서 문서가 생성되면 이곳에 표시돼요.</p>
+            <p>
+              {otherDocumentExists
+                ? `${otherDocumentType === "RESUME" ? "이력서" : "포트폴리오"}는 ${otherDocumentType === "RESUME" ? "이력서" : "포트폴리오"} 탭에 있어요.`
+                : "연결된 서비스에서 문서가 생성되면 이곳에 표시돼요."}
+            </p>
           </div>
         )}
 
-        <p className="dashboard-footnote">연동된 데이터에서 만들어진 문서는 기존 버전과 함께 보관돼요.</p>
+        <p className="dashboard-footnote">
+          연동된 데이터에서 만들어진 문서는 기존 버전과 함께 보관돼요.
+          노션에서는 대시보드가 아니라 ‘생성된 포트폴리오 및 이력서’ 페이지 아래에 올라가요.
+        </p>
       </section>
     </div>
   );

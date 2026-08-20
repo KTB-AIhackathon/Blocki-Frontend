@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import { getDocumentApi } from "../api/apiMode";
 import { createInitialDocumentState, documentReducer, getConnectedIntegrations } from "./documentReducer";
 import { pollGeneration } from "./generationPolling";
-import { generationToast } from "./generationToast";
+import { generationBothToast, generationToast } from "./generationToast";
 
 const defaultDocumentApi = getDocumentApi();
 const DocumentContext = createContext(null);
@@ -343,6 +343,73 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api, reload, setDocumentType]);
 
+  const generateBothDocuments = useCallback(async () => {
+    setPendingDocumentType("BOTH");
+    const types = ["RESUME", "PORTFOLIO"];
+    try {
+      const results = [];
+      for (const documentType of types) {
+        let queued;
+        try {
+          queued = await api.generateDocument(documentType);
+        } catch (error) {
+          if (error.code === "JOB_ALREADY_RUNNING") {
+            continue;
+          }
+          throw error;
+        }
+        let result;
+        try {
+          result = await pollGeneration(queued.id, {
+            getGeneration: api.getDocumentGeneration,
+          });
+        } catch (error) {
+          if (error.code !== "GENERATION_TIMEOUT") {
+            throw error;
+          }
+          result = await api.getDocumentGeneration(queued.id).catch(() => null);
+          if (result && ["SUCCEEDED", "PARTIALLY_SUCCEEDED"].includes(result.status)) {
+            results.push({
+              documentType,
+              status: result.status,
+              missingSources: result.missingSources,
+            });
+            continue;
+          }
+          await reload();
+          dispatch({
+            type: "SET_TOAST",
+            message: "문서 생성이 아직 진행 중이에요. 잠시 후 목록을 확인해 주세요.",
+          });
+          return null;
+        }
+        if (!["SUCCEEDED", "PARTIALLY_SUCCEEDED"].includes(result.status)) {
+          throw Object.assign(new Error("문서를 생성하지 못했어요. 다시 시도해주세요."), {
+            code: result.errorCode ?? "DOCUMENT_GENERATION_FAILED",
+          });
+        }
+        results.push({
+          documentType,
+          status: result.status,
+          missingSources: result.missingSources,
+        });
+      }
+      await reload();
+      dispatch({
+        type: "SET_TOAST",
+        message: results.length === 0
+          ? "이미 진행 중인 생성이 있어요. 잠시 후 목록을 확인해 주세요."
+          : generationBothToast(results),
+      });
+      return results;
+    } catch (error) {
+      dispatch({ type: "SET_TOAST", message: error.message ?? "문서를 생성하지 못했어요. 다시 시도해주세요." });
+      return null;
+    } finally {
+      setPendingDocumentType(null);
+    }
+  }, [api, reload]);
+
   const dataNoticeView = useMemo(() => {
     const disconnectedData = state.loadStatus === "READY" ? getDisconnectedData(state.integrations) : [];
     const disconnectedProviders = new Set(disconnectedData.map((item) => item.provider));
@@ -370,6 +437,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     changeIntegration,
     pendingIntegrationProvider,
     generateDocument,
+    generateBothDocuments,
     pendingDocumentType,
     pendingAutomation,
     updateDocumentGenerationAutomation,
@@ -377,7 +445,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     reload,
     clearToast,
     getLatestVersionId,
-  }), [state, dataNoticeView, setDocumentType, selectVersion, retrySelectedVersion, connectIntegration, disconnectIntegration, changeIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, pendingAutomation, updateDocumentGenerationAutomation, downloadDocumentVersionPdf, reload, clearToast]);
+  }), [state, dataNoticeView, setDocumentType, selectVersion, retrySelectedVersion, connectIntegration, disconnectIntegration, changeIntegration, pendingIntegrationProvider, generateDocument, generateBothDocuments, pendingDocumentType, pendingAutomation, updateDocumentGenerationAutomation, downloadDocumentVersionPdf, reload, clearToast]);
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }

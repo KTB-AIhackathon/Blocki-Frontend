@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generationToast } from "./generationToast";
+import { generationBothToast, generationToast } from "./generationToast";
 
 describe("generationToast", () => {
   it("says the document was created when only fill-in fields are blank", () => {
@@ -16,5 +16,12 @@ describe("generationToast", () => {
 
   it("says success when the job fully succeeded", () => {
     expect(generationToast("PORTFOLIO", "SUCCEEDED")).toBe("포트폴리오를 생성했어요.");
+  });
+
+  it("says both documents were created together", () => {
+    expect(generationBothToast([
+      { status: "SUCCEEDED" },
+      { status: "PARTIALLY_SUCCEEDED", missingSources: [] },
+    ])).toBe("이력서와 포트폴리오를 만들었어요. 비어 있는 칸은 노션에서 채워 주세요.");
   });
 });

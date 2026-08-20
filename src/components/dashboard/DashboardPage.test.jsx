@@ -106,8 +106,8 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("tab", { name: "이력서" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "GitHub 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "문서 생성" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "문서 생성" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "이력서와 포트폴리오 생성" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "이력서와 포트폴리오 생성" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "이력서 생성" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "포트폴리오 생성" })).not.toBeInTheDocument();
   });
@@ -116,7 +116,7 @@ describe("DashboardPage", () => {
     const api = createDocumentApiDouble();
     renderDashboard(api);
 
-    expect(await screen.findByRole("button", { name: "문서 생성" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "이력서와 포트폴리오 생성" })).toBeInTheDocument();
     expect(screen.queryByRole("switch", { name: "문서 자동화" })).not.toBeInTheDocument();
     expect(screen.queryByText("문서 자동화")).not.toBeInTheDocument();
     expect(document.querySelector(".dashboard-header-actions")).toBeNull();
@@ -217,7 +217,7 @@ describe("DashboardPage", () => {
     expect(window.location.pathname).toBe("/workspace");
   });
 
-  it("단일 생성 버튼이 현재 선택한 탭의 문서 유형을 생성한다", async () => {
+  it("생성 버튼은 탭과 관계없이 이력서와 포트폴리오를 함께 만든다", async () => {
     const user = userEvent.setup();
     const api = createDocumentApiDouble();
     api.listIntegrations = vi.fn(async () => ({ integrations: [
@@ -226,18 +226,27 @@ describe("DashboardPage", () => {
     ] }));
     renderDashboard(api);
 
-    const generateButton = await screen.findByRole("button", { name: "문서 생성" });
+    const generateButton = await screen.findByRole("button", { name: "이력서와 포트폴리오 생성" });
     expect(generateButton).toBeEnabled();
     await user.click(generateButton);
 
-    expect(api.generateDocument).toHaveBeenCalledWith("PORTFOLIO");
+    expect(api.generateDocument).toHaveBeenNthCalledWith(1, "RESUME");
+    expect(api.generateDocument).toHaveBeenNthCalledWith(2, "PORTFOLIO");
 
     await user.click(screen.getByRole("tab", { name: "이력서" }));
-    await user.click(screen.getByRole("button", { name: "문서 생성" }));
-
-    expect(api.generateDocument).toHaveBeenLastCalledWith("RESUME");
     expect(await screen.findByRole("heading", { name: "이력서 v1" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "이력서" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("현재 탭이 비어 있어도 다른 유형이 있으면 그 탭을 안내한다", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    await user.click(await screen.findByRole("tab", { name: "이력서" }));
+
+    expect(await screen.findByText("아직 이력서가 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("포트폴리오는 포트폴리오 탭에 있어요.")).toBeInTheDocument();
+    expect(screen.getByText(/생성된 포트폴리오 및 이력서/)).toBeInTheDocument();
   });
 
   it("연동 상태 조회가 실패해도 문서와 누락 안내를 유지한다", async () => {

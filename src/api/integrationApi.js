@@ -101,9 +101,6 @@ export function createIntegrationApi(client = { request }, options = {}) {
         throw createOAuthError("팝업이 차단됐어요. 브라우저에서 팝업을 허용해주세요.", "OAUTH_POPUP_BLOCKED");
       }
       try {
-        const disconnected = await client.request(`/integrations/${providerPath}`, {
-          method: "DELETE",
-        });
         const result = await client.request(`/integrations/${providerPath}/authorize-url`, {
           method: "POST",
         });
@@ -111,7 +108,6 @@ export function createIntegrationApi(client = { request }, options = {}) {
         return {
           popupOpened: true,
           provider,
-          integration: normalizeIntegration(unwrapData(disconnected)),
         };
       } catch (error) {
         popup.close();

@@ -95,4 +95,30 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     await waitFor(() => expect(api.getDocumentVersion).toHaveBeenCalledTimes(2));
   });
+
+  it("선택한 유형의 문서가 없으면 로딩 대신 빈 상태를 보여준다", async () => {
+    const api = {
+      listIntegrations: vi.fn().mockResolvedValue({ integrations: [] }),
+      listDocuments: vi.fn().mockResolvedValue({
+        documents: [{
+          id: "resume-1",
+          type: "RESUME",
+          title: "이력서",
+          latestVersionId: "resume-v1",
+          versions: [{ id: "resume-v1", versionNumber: 1, createdAt: "2026-08-18T09:00:00Z", markdown: "# 이력서" }],
+        }],
+      }),
+      getDocumentVersion: vi.fn(),
+    };
+
+    render(
+      <DocumentProvider api={api}>
+        <DocumentWorkspace />
+      </DocumentProvider>,
+    );
+
+    expect(await screen.findByText("이 유형의 문서가 아직 없어요.")).toBeInTheDocument();
+    expect(screen.queryByText("문서를 불러오는 중이에요.")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "이력서", level: 2 })).toBeInTheDocument();
+  });
 });

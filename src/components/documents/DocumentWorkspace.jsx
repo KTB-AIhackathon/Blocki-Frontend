@@ -127,6 +127,8 @@ export default function DocumentWorkspace() {
               <p>문서를 불러오지 못했어요.</p>
               <button className="text-button" type="button" onClick={retrySelectedVersion}>다시 시도</button>
             </div>
+          ) : !activeDocument ? (
+            <p className="empty-document">이 유형의 문서가 아직 없어요.</p>
           ) : (
             <p className="empty-document">문서를 불러오는 중이에요.</p>
           )}
