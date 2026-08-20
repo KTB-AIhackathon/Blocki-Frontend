@@ -215,4 +215,18 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
   });
+
+  it("연결되지 않은 소스의 누락 안내를 탭 전환 후에도 유지하고 재시도 버튼은 숨긴다", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+
+    expect(await screen.findByText("누락된 데이터가 있어요")).toBeInTheDocument();
+    expect(screen.getByText("Notion: 연결되지 않음")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "이력서" }));
+
+    expect(screen.getByText("누락된 데이터가 있어요")).toBeInTheDocument();
+    expect(screen.getByText("Notion: 연결되지 않음")).toBeInTheDocument();
+  });
 });

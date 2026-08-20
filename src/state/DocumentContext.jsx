@@ -6,6 +6,25 @@ import { pollGeneration } from "./generationPolling";
 
 const defaultDocumentApi = getDocumentApi();
 const DocumentContext = createContext(null);
+const INTEGRATION_PROVIDERS = ["GITHUB", "NOTION"];
+
+function getDisconnectedData(integrations = []) {
+  return INTEGRATION_PROVIDERS
+    .filter((provider) => integrations.find((integration) => integration.provider === provider)?.status !== "CONNECTED")
+    .map((provider) => ({ provider, reason: "연결되지 않음" }));
+}
+
+function mergeMissingData(missingData, additionalData) {
+  const existingProviders = new Set(
+    missingData
+      .filter((item) => item && typeof item === "object")
+      .map((item) => item.provider),
+  );
+  return [
+    ...missingData,
+    ...additionalData.filter((item) => !existingProviders.has(item.provider)),
+  ];
+}
 
 function getLatestVersionId(document) {
   return document?.latestVersionId ?? document?.versions.at(-1)?.id ?? null;
@@ -167,8 +186,23 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api, reload, setDocumentType]);
 
+  const dataNoticeView = useMemo(() => {
+    const disconnectedData = state.loadStatus === "READY" ? getDisconnectedData(state.integrations) : [];
+    const disconnectedProviders = new Set(disconnectedData.map((item) => item.provider));
+    const displayMissingData = mergeMissingData(state.missingData, disconnectedData);
+    const displayDataNotice = disconnectedData.length > 0 ? "PARTIAL_DATA" : state.dataNotice;
+    const canRetryDataNotice = displayDataNotice === "PARTIAL_DATA"
+      && (displayMissingData.length === 0
+        || displayMissingData.some((item) => typeof item === "string" || !disconnectedProviders.has(item.provider)));
+
+    return { displayDataNotice, displayMissingData, canRetryDataNotice };
+  }, [state]);
+
   const value = useMemo(() => ({
     ...state,
+    dataNotice: dataNoticeView.displayDataNotice,
+    missingData: dataNoticeView.displayMissingData,
+    canRetryDataNotice: dataNoticeView.canRetryDataNotice,
     connectedIntegrations: getConnectedIntegrations(state),
     connectedCount: getConnectedIntegrations(state).length,
     setDocumentType,
@@ -181,7 +215,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     reload,
     clearToast,
     getLatestVersionId,
-  }), [state, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, reload, clearToast]);
+  }), [state, dataNoticeView, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, reload, clearToast]);
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }

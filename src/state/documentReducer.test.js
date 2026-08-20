@@ -90,4 +90,22 @@ describe("documentReducer", () => {
     expect(next.dataNotice).toBe("PARTIAL_DATA");
     expect(next.missingData[0].provider).toBe("NOTION");
   });
+
+  it("문서 탭을 바꿔도 누락 데이터 안내를 초기화하지 않는다", () => {
+    const loaded = documentReducer(createInitialDocumentState(), {
+      type: "LOAD_SUCCESS",
+      integrations: baseIntegrations,
+      documents: [baseDocument],
+      dataNotice: "PARTIAL_DATA",
+      missingData: [{ provider: "NOTION", reason: "연결되지 않음" }],
+    });
+
+    const next = documentReducer(loaded, {
+      type: "SET_DOCUMENT_TYPE",
+      documentType: DOCUMENT_TYPES.RESUME,
+    });
+
+    expect(next.dataNotice).toBe("PARTIAL_DATA");
+    expect(next.missingData).toEqual([{ provider: "NOTION", reason: "연결되지 않음" }]);
+  });
 });

@@ -18,6 +18,7 @@ export default function DocumentWorkspace() {
     selectedVersion,
     dataNotice,
     missingData,
+    canRetryDataNotice,
     reload,
     selectVersion,
   } = useDocumentWorkspace();
@@ -34,7 +35,7 @@ export default function DocumentWorkspace() {
         <DocumentTypeTabs />
       </header>
 
-      {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={reload} /> : null}
+      {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={canRetryDataNotice ? reload : undefined} /> : null}
 
       <div className="document-layout">
         <aside className="document-tree" aria-label="문서 버전 목록">

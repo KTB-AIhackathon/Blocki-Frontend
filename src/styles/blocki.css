@@ -345,7 +345,7 @@ body {
 
 .dashboard-page .scope-panel {
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: var(--space-6);
   padding: var(--space-6) var(--space-7);
   background: rgba(255, 255, 255, 0.58);
   box-shadow: none;
