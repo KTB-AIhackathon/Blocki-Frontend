@@ -99,5 +99,7 @@ describe("AutomationScheduleSettings", () => {
       .toBe("지금 바로 만들지 않아요. 다음 실행은 오늘 금요일 1시 44분이에요.");
     expect(describeNextAutomationRun("MONDAY", "21", "00", afterSlot))
       .toBe("지금 바로 만들지 않아요. 다음 실행은 월요일 21시예요.");
+    expect(describeNextAutomationRun("FRIDAY", "01", "44", afterSlot, { draft: true }))
+      .toBe("저장하면 다음 실행은 다음 주 금요일 1시 44분이에요.");
   });
 });

@@ -65,13 +65,16 @@ function clockLabel(hour, minute) {
   return minuteNumber > 0 ? `${Number(hour)}시 ${minuteNumber}분` : `${Number(hour)}시`;
 }
 
-export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Date()) {
+export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Date(), { draft = false } = {}) {
+  const lead = draft ? "저장하면 다음 실행은" : "지금 바로 만들지 않아요. 다음 실행은";
   const parts = kstClockParts(now);
   const nowDay = weekdayFromShort[parts.weekday];
   const targetIndex = weekdayKeys.indexOf(dayOfWeek);
   const nowIndex = weekdayKeys.indexOf(nowDay);
   if (targetIndex < 0 || nowIndex < 0) {
-    return "지금 바로 만들지 않아요. 저장한 요일·시간에 한 번 돌아요.";
+    return draft
+      ? "저장하면 고른 요일·시간에 한 번 돌아요."
+      : "지금 바로 만들지 않아요. 저장한 요일·시간에 한 번 돌아요.";
   }
   const nowMinutes = Number(parts.hour) * 60 + Number(parts.minute);
   const targetMinutes = Number(hour) * 60 + Number(minute);
@@ -86,7 +89,7 @@ export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Dat
       : dayLabelsByValue[dayOfWeek];
   const clock = clockLabel(hour, minute);
   const copula = clock.endsWith("분") ? "이에요" : "예요";
-  return `지금 바로 만들지 않아요. 다음 실행은 ${when} ${clock}${copula}.`;
+  return `${lead} ${when} ${clock}${copula}.`;
 }
 
 export default function AutomationScheduleSettings() {
@@ -163,7 +166,13 @@ export default function AutomationScheduleSettings() {
       <p className="settings-section-description">
         문서 자동화가 켜져 있으면, 매주 아래 요일·시간에 이력서와 포트폴리오를 자동으로 생성해요.
         {" "}
-        {describeNextAutomationRun(dayOfWeek, hour, minute)}
+        {isDirty
+          ? describeNextAutomationRun(dayOfWeek, hour, minute, new Date(), { draft: true })
+          : describeNextAutomationRun(
+            savedSchedule.dayOfWeek,
+            extractHour(savedSchedule.time),
+            extractMinute(savedSchedule.time),
+          )}
       </p>
       <form className="automation-schedule-form" onSubmit={handleSubmit}>
         <div className="automation-schedule-field">
