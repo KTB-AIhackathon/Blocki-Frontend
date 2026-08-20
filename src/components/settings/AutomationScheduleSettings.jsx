@@ -102,7 +102,15 @@ export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Dat
 }
 
 export default function AutomationScheduleSettings() {
-  const { automation, automationLoaded, loadStatus, pendingAutomation, updateDocumentGenerationAutomation } = useDocumentWorkspace();
+  const {
+    automation,
+    automationLoaded,
+    loadStatus,
+    pendingAutomation,
+    updateDocumentGenerationAutomation,
+    integrations,
+  } = useDocumentWorkspace();
+  const githubConnected = integrations.some((item) => item.provider === "GITHUB" && item.status === "CONNECTED");
   const savedSchedule = automation.schedule;
   const [dayOfWeek, setDayOfWeek] = useState(savedSchedule.dayOfWeek);
   const [hour, setHour] = useState(extractHour(savedSchedule.time));
@@ -125,6 +133,9 @@ export default function AutomationScheduleSettings() {
 
   const handleToggle = async () => {
     if (!settingsReady) {
+      return;
+    }
+    if (!automation.enabled && !githubConnected) {
       return;
     }
     await updateDocumentGenerationAutomation(!automation.enabled, {
@@ -169,7 +180,7 @@ export default function AutomationScheduleSettings() {
           </span>
           <button
             className="button button-outline compact-button"
-            disabled={pendingAutomation || !settingsReady}
+            disabled={pendingAutomation || !settingsReady || (!automation.enabled && !githubConnected)}
             type="button"
             onClick={handleToggle}
           >
@@ -194,6 +205,9 @@ export default function AutomationScheduleSettings() {
           )}
         {loadStatus === "READY" && !automationLoaded
           ? " 설정을 아직 불러오지 못했어요. 새로고침한 뒤 다시 저장해 주세요."
+          : ""}
+        {!automation.enabled && !githubConnected
+          ? " GitHub를 다시 연결해야 자동화를 켤 수 있어요."
           : ""}
       </p>
       <form className="automation-schedule-form" onSubmit={handleSubmit}>

@@ -104,7 +104,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("1개 연결됨")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "포트폴리오" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "이력서" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "GitHub 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "문서 생성" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "문서 생성" })).toBeDisabled();
@@ -144,19 +144,25 @@ describe("DashboardPage", () => {
       }));
     });
 
-    expect(await screen.findByRole("button", { name: "Notion 연결됨, 눌러서 연결 해제" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Notion 연결 해제" })).toBeEnabled();
   });
 
-  it("연결됨 버튼을 누르면 연결하기 상태로 바뀐다", async () => {
+  it("연결 해제는 확인한 뒤에만 토큰을 지운다", async () => {
     const user = userEvent.setup();
     const api = createDocumentApiDouble();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
     renderDashboard(api);
 
-    await user.click(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" }));
+    const disconnect = await screen.findByRole("button", { name: "GitHub 연결 해제" });
+    await user.click(disconnect);
+    expect(api.disconnectIntegration).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "GitHub 연결 해제" })).toBeInTheDocument();
 
+    await user.click(disconnect);
     expect(await screen.findByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
     expect(screen.getByText("0개 연결됨")).toBeInTheDocument();
-    expect(api.getDocumentGenerationAutomation).toHaveBeenCalledTimes(2);
+    expect(api.disconnectIntegration).toHaveBeenCalledWith("GITHUB");
+    confirm.mockRestore();
   });
 
   it("같은 유형의 문서를 아래로 계속 쌓아 보여준다", async () => {

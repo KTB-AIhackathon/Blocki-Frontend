@@ -80,13 +80,19 @@ export default function DashboardPage() {
                   <button
                     aria-label={pendingIntegrationProvider === integration.provider
                       ? `${providerLabels[integration.provider]} 연결 해제 중`
-                      : `${providerLabels[integration.provider]} 연결됨, 눌러서 연결 해제`}
+                      : `${providerLabels[integration.provider]} 연결 해제`}
                     className="integration-action-button is-connected"
                     disabled={pendingIntegrationProvider === integration.provider}
                     type="button"
-                    onClick={() => disconnectIntegration(integration.provider)}
+                    onClick={() => {
+                      const label = providerLabels[integration.provider];
+                      if (!window.confirm(`${label} 연결을 해제할까요? 토큰이 지워지고, GitHub를 끊으면 자동화도 켤 수 없습니다.`)) {
+                        return;
+                      }
+                      disconnectIntegration(integration.provider);
+                    }}
                   >
-                    {pendingIntegrationProvider === integration.provider ? "해제 중…" : "연결됨"}
+                    {pendingIntegrationProvider === integration.provider ? "해제 중…" : "연결 해제"}
                   </button>
                 ) : (
                   <button

@@ -5,13 +5,16 @@ import { describe, expect, it, vi } from "vitest";
 import AutomationScheduleSettings, { describeNextAutomationRun } from "./AutomationScheduleSettings";
 import { DocumentProvider } from "../../state/DocumentContext";
 
-function createDocumentApiDouble() {
+function createDocumentApiDouble({ githubConnected = false } = {}) {
+  const integrations = githubConnected
+    ? [{ provider: "GITHUB", status: "CONNECTED", itemCount: 1 }]
+    : [];
   let automation = {
     enabled: true,
     schedule: { dayOfWeek: "MONDAY", time: "21:00", timezone: "Asia/Seoul" },
   };
   return {
-    listIntegrations: vi.fn(async () => ({ integrations: [] })),
+    listIntegrations: vi.fn(async () => ({ integrations })),
     listDocuments: vi.fn(async () => ({ documents: [] })),
     getDocumentGenerationAutomation: vi.fn(async () => automation),
     updateDocumentGenerationAutomation: vi.fn(async (enabled, schedule) => {
@@ -86,7 +89,28 @@ describe("AutomationScheduleSettings", () => {
       time: "21:00",
     });
     expect(await screen.findByText("현재 꺼짐")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "자동화 켜기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "자동화 켜기" })).toBeDisabled();
+    expect(screen.getByText(/GitHub를 다시 연결해야 자동화를 켤 수 있어요/)).toBeInTheDocument();
+  });
+
+  it("GitHub가 연결되어 있으면 꺼진 자동화를 다시 켤 수 있다", async () => {
+    const user = userEvent.setup();
+    const api = createDocumentApiDouble({ githubConnected: true });
+    api.getDocumentGenerationAutomation = vi.fn(async () => ({
+      enabled: false,
+      schedule: { dayOfWeek: "FRIDAY", time: "03:09", timezone: "Asia/Seoul" },
+    }));
+    render(
+      <DocumentProvider api={api}>
+        <AutomationScheduleSettings />
+      </DocumentProvider>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "자동화 켜기" }));
+    expect(api.updateDocumentGenerationAutomation).toHaveBeenCalledWith(true, {
+      dayOfWeek: "FRIDAY",
+      time: "03:09",
+    });
   });
 
   it("지난 시각은 다음 주, 아직 안 온 시각은 오늘이라고 말한다", () => {
