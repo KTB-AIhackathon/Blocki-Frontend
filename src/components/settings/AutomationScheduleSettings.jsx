@@ -34,6 +34,61 @@ function extractMinute(time = "21:00") {
   return extractPart(time, 1, "00");
 }
 
+const weekdayKeys = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+const weekdayFromShort = {
+  Sun: "SUNDAY",
+  Mon: "MONDAY",
+  Tue: "TUESDAY",
+  Wed: "WEDNESDAY",
+  Thu: "THURSDAY",
+  Fri: "FRIDAY",
+  Sat: "SATURDAY",
+};
+
+function kstClockParts(now) {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Seoul",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(now)
+      .filter(({ type }) => type !== "literal")
+      .map(({ type, value }) => [type, value]),
+  );
+}
+
+function clockLabel(hour, minute) {
+  const minuteNumber = Number(minute);
+  return minuteNumber > 0 ? `${Number(hour)}시 ${minuteNumber}분` : `${Number(hour)}시`;
+}
+
+export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Date()) {
+  const parts = kstClockParts(now);
+  const nowDay = weekdayFromShort[parts.weekday];
+  const targetIndex = weekdayKeys.indexOf(dayOfWeek);
+  const nowIndex = weekdayKeys.indexOf(nowDay);
+  if (targetIndex < 0 || nowIndex < 0) {
+    return "지금 바로 만들지 않아요. 저장한 요일·시간에 한 번 돌아요.";
+  }
+  const nowMinutes = Number(parts.hour) * 60 + Number(parts.minute);
+  const targetMinutes = Number(hour) * 60 + Number(minute);
+  let daysAhead = (targetIndex - nowIndex + 7) % 7;
+  if (daysAhead === 0 && targetMinutes <= nowMinutes) {
+    daysAhead = 7;
+  }
+  const when = daysAhead === 0
+    ? `오늘 ${dayLabelsByValue[dayOfWeek]}`
+    : daysAhead === 7
+      ? `다음 주 ${dayLabelsByValue[dayOfWeek]}`
+      : dayLabelsByValue[dayOfWeek];
+  const clock = clockLabel(hour, minute);
+  const copula = clock.endsWith("분") ? "이에요" : "예요";
+  return `지금 바로 만들지 않아요. 다음 실행은 ${when} ${clock}${copula}.`;
+}
+
 export default function AutomationScheduleSettings() {
   const { automation, pendingAutomation, updateDocumentGenerationAutomation } = useDocumentWorkspace();
   const savedSchedule = automation.schedule;
@@ -107,6 +162,8 @@ export default function AutomationScheduleSettings() {
       </div>
       <p className="settings-section-description">
         문서 자동화가 켜져 있으면, 매주 아래 요일·시간에 이력서와 포트폴리오를 자동으로 생성해요.
+        {" "}
+        {describeNextAutomationRun(dayOfWeek, hour, minute)}
       </p>
       <form className="automation-schedule-form" onSubmit={handleSubmit}>
         <div className="automation-schedule-field">
@@ -163,6 +220,7 @@ export default function AutomationScheduleSettings() {
           dayLabel={dayLabelsByValue[dayOfWeek] ?? dayOfWeek}
           hour={hour}
           minute={minute}
+          nextRunCopy={describeNextAutomationRun(dayOfWeek, hour, minute)}
           onClose={() => setShowSavedModal(false)}
         />
       ) : null}

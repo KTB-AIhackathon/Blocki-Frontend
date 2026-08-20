@@ -99,7 +99,12 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
       }
       if (event.data.result === "success") {
         reload();
-        dispatch({ type: "SET_TOAST", message: `${event.data.provider === "GITHUB" ? "GitHub" : "Notion"} 연결을 확인했어요.` });
+        dispatch({
+          type: "SET_TOAST",
+          message: event.data.error === "NOTION_PAGE_ACCESS"
+            ? "Notion은 연결됐어요. 페이지 접근을 허용한 뒤 다시 연결하면 문서가 올라갑니다."
+            : `${event.data.provider === "GITHUB" ? "GitHub" : "Notion"} 연결을 확인했어요.`,
+        });
       } else {
         dispatch({ type: "SET_TOAST", message: "연결을 완료하지 못했어요. 다시 시도해주세요." });
       }

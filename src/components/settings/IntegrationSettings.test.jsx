@@ -49,6 +49,7 @@ describe("IntegrationSettings", () => {
     expect(screen.getByText("마일스")).toBeInTheDocument();
     expect(screen.getByText("miles@example.com")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "소스 연동 상태" })).toBeInTheDocument();
+    expect(screen.getByText("Notion은 연결 화면에서 페이지를 선택해야 생성된 문서가 올라갑니다.")).toBeInTheDocument();
     expect(document.querySelector('[data-provider-logo="GITHUB"]')).toBeInTheDocument();
     expect(document.querySelector('[data-provider-logo="NOTION"]')).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "GitHub 계정 변경" })).toBeEnabled();

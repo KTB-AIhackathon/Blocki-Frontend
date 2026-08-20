@@ -48,6 +48,9 @@ export default function IntegrationSettings() {
             <p className="section-kicker">SOURCES</p>
             <h2 id="source-status-heading">소스 연동 상태</h2>
           </div>
+          <p className="settings-section-description">
+            Notion은 연결 화면에서 페이지를 선택해야 생성된 문서가 올라갑니다.
+          </p>
           <div className="settings-integration-list">
             {integrations.map((integration) => {
               const label = providerLabels[integration.provider];

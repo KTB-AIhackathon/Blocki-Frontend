@@ -2,7 +2,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import AutomationScheduleSettings from "./AutomationScheduleSettings";
+import AutomationScheduleSettings, { describeNextAutomationRun } from "./AutomationScheduleSettings";
 import { DocumentProvider } from "../../state/DocumentContext";
 
 function createDocumentApiDouble() {
@@ -87,5 +87,17 @@ describe("AutomationScheduleSettings", () => {
     });
     expect(await screen.findByText("현재 꺼짐")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "자동화 켜기" })).toBeInTheDocument();
+  });
+
+  it("지난 시각은 다음 주, 아직 안 온 시각은 오늘이라고 말한다", () => {
+    const afterSlot = new Date("2026-08-20T17:12:00Z");
+    const beforeSlot = new Date("2026-08-20T16:40:00Z");
+
+    expect(describeNextAutomationRun("FRIDAY", "01", "44", afterSlot))
+      .toBe("지금 바로 만들지 않아요. 다음 실행은 다음 주 금요일 1시 44분이에요.");
+    expect(describeNextAutomationRun("FRIDAY", "01", "44", beforeSlot))
+      .toBe("지금 바로 만들지 않아요. 다음 실행은 오늘 금요일 1시 44분이에요.");
+    expect(describeNextAutomationRun("MONDAY", "21", "00", afterSlot))
+      .toBe("지금 바로 만들지 않아요. 다음 실행은 월요일 21시예요.");
   });
 });

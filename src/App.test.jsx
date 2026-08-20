@@ -41,4 +41,26 @@ describe("App", () => {
     }, window.location.origin);
     expect(close).toHaveBeenCalled();
   });
+
+  it("Notion 페이지 접근이 없으면 연결은 유지한 채 다시 선택하라고 말한다", async () => {
+    const postMessage = vi.fn();
+    Object.defineProperty(window, "opener", { configurable: true, value: { postMessage } });
+    vi.spyOn(window, "close").mockImplementation(() => undefined);
+    window.history.replaceState(
+      {},
+      "",
+      "/oauth/callback?provider=notion&result=success&error=NOTION_PAGE_ACCESS",
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Notion은 연결됐어요. 페이지를 다시 선택해 주세요." }))
+      .toBeInTheDocument();
+    expect(postMessage).toHaveBeenCalledWith({
+      type: "blocki:oauth-complete",
+      provider: "NOTION",
+      result: "success",
+      error: "NOTION_PAGE_ACCESS",
+    }, window.location.origin);
+  });
 });
