@@ -23,6 +23,7 @@ export const initialDocumentState = {
   selectedVersion: null,
   versionLoadError: null,
   automation: DEFAULT_AUTOMATION,
+  automationLoaded: false,
   loadStatus: "IDLE",
   error: null,
   toast: null,
@@ -37,6 +38,7 @@ export function createInitialDocumentState(overrides = {}) {
     integrations: mergeIntegrations(overrides.integrations),
     documents: overrides.documents ?? [],
     automation: mergeAutomation(overrides.automation),
+    automationLoaded: overrides.automationLoaded ?? false,
     missingData: overrides.missingData ?? [],
   };
 }
@@ -110,6 +112,7 @@ export function documentReducer(state, action) {
           automation: action.automation === undefined
             ? state.automation
             : mergeAutomation(action.automation),
+          automationLoaded: action.automation !== undefined,
           dataNotice: action.dataNotice ?? null,
           missingData: action.missingData ?? [],
           loadStatus: "READY",
@@ -137,7 +140,7 @@ export function documentReducer(state, action) {
     case "INTEGRATION_UPDATED":
       return { ...state, integrations: replaceIntegration(state.integrations, action.integration) };
     case "AUTOMATION_UPDATED":
-      return { ...state, automation: mergeAutomation(action.automation) };
+      return { ...state, automation: mergeAutomation(action.automation), automationLoaded: true };
     case "SET_TOAST":
       return { ...state, toast: action.message };
     case "CLEAR_TOAST":

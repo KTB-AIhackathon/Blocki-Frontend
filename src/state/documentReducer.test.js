@@ -76,6 +76,18 @@ describe("documentReducer", () => {
     });
 
     expect(loaded.automation).toEqual(automation);
+    expect(loaded.automationLoaded).toBe(true);
+  });
+
+  it("자동화 조회가 빠지면 기본 꺼짐을 서버 값으로 쓰지 않는다", () => {
+    const loaded = documentReducer(createInitialDocumentState(), {
+      type: "LOAD_SUCCESS",
+      integrations: baseIntegrations,
+      documents: [],
+    });
+
+    expect(loaded.automation.enabled).toBe(false);
+    expect(loaded.automationLoaded).toBe(false);
   });
 
   it("기록 부족 조회 결과는 기존 문서와 전용 안내를 함께 보존한다", () => {

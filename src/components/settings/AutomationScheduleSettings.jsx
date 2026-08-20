@@ -65,13 +65,22 @@ function clockLabel(hour, minute) {
   return minuteNumber > 0 ? `${Number(hour)}시 ${minuteNumber}분` : `${Number(hour)}시`;
 }
 
-export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Date(), { draft = false } = {}) {
-  const lead = draft ? "저장하면 다음 실행은" : "지금 바로 만들지 않아요. 다음 실행은";
+export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Date(), { draft = false, enabled = true } = {}) {
+  const lead = !enabled
+    ? (draft
+      ? "저장하면 시간만 바뀌어요. 자동화가 꺼져 있어서 바로 돌아가지 않아요. 켜면 다음 실행은"
+      : "자동화가 꺼져 있어서 이 시간에는 안 돌아요. 켜면 다음 실행은")
+    : (draft ? "저장하면 다음 실행은" : "지금 바로 만들지 않아요. 다음 실행은");
   const parts = kstClockParts(now);
   const nowDay = weekdayFromShort[parts.weekday];
   const targetIndex = weekdayKeys.indexOf(dayOfWeek);
   const nowIndex = weekdayKeys.indexOf(nowDay);
   if (targetIndex < 0 || nowIndex < 0) {
+    if (!enabled) {
+      return draft
+        ? "저장하면 시간만 바뀌어요. 실행하려면 자동화를 켜 주세요."
+        : "자동화가 꺼져 있어서 이 시간에는 안 돌아요. 실행하려면 자동화를 켜 주세요.";
+    }
     return draft
       ? "저장하면 고른 요일·시간에 한 번 돌아요."
       : "지금 바로 만들지 않아요. 저장한 요일·시간에 한 번 돌아요.";
@@ -93,7 +102,7 @@ export function describeNextAutomationRun(dayOfWeek, hour, minute, now = new Dat
 }
 
 export default function AutomationScheduleSettings() {
-  const { automation, pendingAutomation, updateDocumentGenerationAutomation } = useDocumentWorkspace();
+  const { automation, automationLoaded, loadStatus, pendingAutomation, updateDocumentGenerationAutomation } = useDocumentWorkspace();
   const savedSchedule = automation.schedule;
   const [dayOfWeek, setDayOfWeek] = useState(savedSchedule.dayOfWeek);
   const [hour, setHour] = useState(extractHour(savedSchedule.time));
@@ -112,7 +121,12 @@ export default function AutomationScheduleSettings() {
     || hour !== extractHour(savedSchedule.time)
     || minute !== extractMinute(savedSchedule.time);
 
+  const settingsReady = loadStatus === "READY" && automationLoaded;
+
   const handleToggle = async () => {
+    if (!settingsReady) {
+      return;
+    }
     await updateDocumentGenerationAutomation(!automation.enabled, {
       dayOfWeek,
       time: `${hour}:${minute}`,
@@ -121,7 +135,7 @@ export default function AutomationScheduleSettings() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (isSubmittingRef.current) {
+    if (!settingsReady || isSubmittingRef.current) {
       return;
     }
     isSubmittingRef.current = true;
@@ -155,7 +169,7 @@ export default function AutomationScheduleSettings() {
           </span>
           <button
             className="button button-outline compact-button"
-            disabled={pendingAutomation}
+            disabled={pendingAutomation || !settingsReady}
             type="button"
             onClick={handleToggle}
           >
@@ -167,12 +181,20 @@ export default function AutomationScheduleSettings() {
         문서 자동화가 켜져 있으면, 매주 아래 요일·시간에 이력서와 포트폴리오를 자동으로 생성해요.
         {" "}
         {isDirty
-          ? describeNextAutomationRun(dayOfWeek, hour, minute, new Date(), { draft: true })
+          ? describeNextAutomationRun(dayOfWeek, hour, minute, new Date(), {
+            draft: true,
+            enabled: automation.enabled,
+          })
           : describeNextAutomationRun(
             savedSchedule.dayOfWeek,
             extractHour(savedSchedule.time),
             extractMinute(savedSchedule.time),
+            new Date(),
+            { enabled: automation.enabled },
           )}
+        {loadStatus === "READY" && !automationLoaded
+          ? " 설정을 아직 불러오지 못했어요. 새로고침한 뒤 다시 저장해 주세요."
+          : ""}
       </p>
       <form className="automation-schedule-form" onSubmit={handleSubmit}>
         <div className="automation-schedule-field">
@@ -219,7 +241,7 @@ export default function AutomationScheduleSettings() {
             ))}
           </select>
         </div>
-        <button className="button button-primary" type="submit" disabled={pendingAutomation || !isDirty}>
+        <button className="button button-primary" type="submit" disabled={pendingAutomation || !isDirty || !settingsReady}>
           {pendingAutomation ? "저장 중…" : "저장"}
         </button>
       </form>
@@ -229,7 +251,10 @@ export default function AutomationScheduleSettings() {
           dayLabel={dayLabelsByValue[dayOfWeek] ?? dayOfWeek}
           hour={hour}
           minute={minute}
-          nextRunCopy={describeNextAutomationRun(dayOfWeek, hour, minute)}
+          enabled={automation.enabled}
+          nextRunCopy={describeNextAutomationRun(dayOfWeek, hour, minute, new Date(), {
+            enabled: automation.enabled,
+          })}
           onClose={() => setShowSavedModal(false)}
         />
       ) : null}
