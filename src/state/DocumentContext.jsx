@@ -34,12 +34,17 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
   const [state, dispatch] = useReducer(documentReducer, undefined, createInitialDocumentState);
   const [pendingIntegrationProvider, setPendingIntegrationProvider] = useState(null);
   const [pendingDocumentType, setPendingDocumentType] = useState(null);
+  const [pendingAutomation, setPendingAutomation] = useState(false);
 
   const reload = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
-    const [integrationResult, documentResult] = await Promise.allSettled([
+    const automationRequest = typeof api.getDocumentGenerationAutomation === "function"
+      ? api.getDocumentGenerationAutomation()
+      : Promise.resolve(null);
+    const [integrationResult, documentResult, automationResult] = await Promise.allSettled([
       api.listIntegrations(),
       api.listDocuments(),
+      automationRequest,
     ]);
     if (integrationResult.status === "rejected" && documentResult.status === "rejected") {
       dispatch({ type: "LOAD_ERROR", error: documentResult.reason });
@@ -60,6 +65,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
           ? integrationResult.value.integrations ?? []
           : undefined,
         documents: documentData?.documents,
+        automation: automationResult.status === "fulfilled" ? automationResult.value ?? undefined : undefined,
         dataNotice: documentData?.dataNotice
           ?? (missingData.length > 0 ? "PARTIAL_DATA" : null),
         missingData,
@@ -147,13 +153,89 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     try {
       const result = await api.disconnectIntegration(provider);
       dispatch({ type: "INTEGRATION_UPDATED", integration: result.integration });
-      dispatch({ type: "SET_TOAST", message: `${provider === "GITHUB" ? "GitHub" : "Notion"} 연결을 해제했어요.` });
+      let automationRefreshFailed = false;
+      if (provider === "GITHUB" && typeof api.getDocumentGenerationAutomation === "function") {
+        try {
+          const automation = await api.getDocumentGenerationAutomation();
+          dispatch({ type: "AUTOMATION_UPDATED", automation });
+        } catch {
+          automationRefreshFailed = true;
+        }
+      }
+      dispatch({
+        type: "SET_TOAST",
+        message: automationRefreshFailed
+          ? "GitHub 연결 해제 후 자동화 상태를 확인하지 못했어요."
+          : `${provider === "GITHUB" ? "GitHub" : "Notion"} 연결을 해제했어요.`,
+      });
       return result;
     } catch {
       dispatch({ type: "SET_TOAST", message: "연결을 해제하지 못했어요. 다시 시도해주세요." });
       return null;
     } finally {
       setPendingIntegrationProvider(null);
+    }
+  }, [api]);
+
+  const changeIntegration = useCallback(async (provider) => {
+    if (typeof api.changeIntegration !== "function") {
+      return null;
+    }
+    setPendingIntegrationProvider(provider);
+    try {
+      const result = await api.changeIntegration(provider);
+      if (result?.integration) {
+        dispatch({ type: "INTEGRATION_UPDATED", integration: result.integration });
+      }
+      dispatch({
+        type: "SET_TOAST",
+        message: provider === "GITHUB"
+          ? "GitHub 계정 선택 창을 열었어요."
+          : "Notion 인증 창을 열었어요. 같은 계정이 선택되면 Notion에서 로그아웃한 뒤 다시 시도해주세요.",
+      });
+      return result;
+    } catch {
+      await reload();
+      dispatch({ type: "SET_TOAST", message: "계정 변경을 시작하지 못했어요. 다시 시도해주세요." });
+      return null;
+    } finally {
+      setPendingIntegrationProvider(null);
+    }
+  }, [api, reload]);
+
+  const updateDocumentGenerationAutomation = useCallback(async (enabled) => {
+    if (typeof api.updateDocumentGenerationAutomation !== "function") {
+      return null;
+    }
+    setPendingAutomation(true);
+    try {
+      const automation = await api.updateDocumentGenerationAutomation(enabled);
+      dispatch({ type: "AUTOMATION_UPDATED", automation });
+      dispatch({ type: "SET_TOAST", message: enabled ? "문서 자동화를 켰어요." : "문서 자동화를 껐어요." });
+      return automation;
+    } catch (error) {
+      dispatch({
+        type: "SET_TOAST",
+        message: error.code === "GITHUB_INTEGRATION_REQUIRED"
+          ? error.message
+          : "문서 자동화 설정을 바꾸지 못했어요. 다시 시도해주세요.",
+      });
+      return null;
+    } finally {
+      setPendingAutomation(false);
+    }
+  }, [api]);
+
+  const downloadDocumentVersionPdf = useCallback(async (documentId, versionId) => {
+    if (typeof api.downloadDocumentVersionPdf !== "function") {
+      dispatch({ type: "SET_TOAST", message: "PDF 다운로드 API가 연결되지 않았어요." });
+      return null;
+    }
+    try {
+      return await api.downloadDocumentVersionPdf(documentId, versionId);
+    } catch (error) {
+      dispatch({ type: "SET_TOAST", message: error.message ?? "PDF를 다운로드하지 못했어요." });
+      return null;
     }
   }, [api]);
 
@@ -209,13 +291,17 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     selectVersion,
     connectIntegration,
     disconnectIntegration,
+    changeIntegration,
     pendingIntegrationProvider,
     generateDocument,
     pendingDocumentType,
+    pendingAutomation,
+    updateDocumentGenerationAutomation,
+    downloadDocumentVersionPdf,
     reload,
     clearToast,
     getLatestVersionId,
-  }), [state, dataNoticeView, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, reload, clearToast]);
+  }), [state, dataNoticeView, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, changeIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, pendingAutomation, updateDocumentGenerationAutomation, downloadDocumentVersionPdf, reload, clearToast]);
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }

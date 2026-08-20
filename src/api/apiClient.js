@@ -110,6 +110,13 @@ function buildFetchOptions(options = {}) {
 
 export async function request(path, options = {}) {
   const response = await fetch(buildApiUrl(path), buildFetchOptions(options));
+  if (options.responseType === "blob") {
+    if (!response.ok) {
+      const body = await readResponseBody(response);
+      throw normalizeApiError(body, response);
+    }
+    return response.blob();
+  }
   const body = await readResponseBody(response);
   if (!response.ok) {
     throw normalizeApiError(body, response);

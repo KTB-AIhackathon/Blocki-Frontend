@@ -63,6 +63,21 @@ describe("documentReducer", () => {
     expect(loaded.selectedVersionId).toBe("portfolio-v1");
   });
 
+  it("문서 자동 생성 설정을 조회 결과로 보존한다", () => {
+    const automation = {
+      enabled: true,
+      schedule: { dayOfWeek: "MONDAY", time: "21:00", timezone: "Asia/Seoul" },
+    };
+    const loaded = documentReducer(createInitialDocumentState(), {
+      type: "LOAD_SUCCESS",
+      integrations: baseIntegrations,
+      documents: [],
+      automation,
+    });
+
+    expect(loaded.automation).toEqual(automation);
+  });
+
   it("기록 부족 조회 결과는 기존 문서와 전용 안내를 함께 보존한다", () => {
     const next = documentReducer(createInitialDocumentState(), {
       type: "LOAD_SUCCESS",
