@@ -1,6 +1,7 @@
 // 인증 상태와 현재 URL에 따라 공개·인증 화면을 표시한다.
 import { useEffect } from "react";
 import AuthPage from "./components/auth/AuthPage";
+import OAuthCallbackPage from "./components/auth/OAuthCallbackPage";
 import AppShell from "./components/layout/AppShell";
 import Toast from "./components/common/Toast";
 import { AuthProvider, useAuth } from "./state/AuthContext";
@@ -22,6 +23,9 @@ function AppContent() {
   const pathname = useAppPathname();
 
   useEffect(() => {
+    if (pathname === ROUTES.OAUTH_CALLBACK) {
+      return;
+    }
     if (status === "AUTHENTICATED" && !isPrivateRoute(pathname)) {
       navigateTo(ROUTES.WORKSPACE, { replace: true });
     }
@@ -29,6 +33,10 @@ function AppContent() {
       navigateTo(ROUTES.LOGIN, { replace: true });
     }
   }, [pathname, status]);
+
+  if (pathname === ROUTES.OAUTH_CALLBACK) {
+    return <OAuthCallbackPage />;
+  }
 
   if (status === "BOOTING") {
     return <main className="app-loading" aria-label="Blocki 불러오는 중">Blocki를 준비하고 있어요.</main>;

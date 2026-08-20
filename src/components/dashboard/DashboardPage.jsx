@@ -80,12 +80,15 @@ export default function DashboardPage() {
                   </button>
                 ) : (
                   <button
-                    aria-label={`${providerLabels[integration.provider]} 연결하기`}
+                    aria-label={pendingIntegrationProvider === integration.provider
+                      ? `${providerLabels[integration.provider]} 연결 중`
+                      : `${providerLabels[integration.provider]} 연결하기`}
                     className="integration-action-button"
+                    disabled={pendingIntegrationProvider === integration.provider}
                     type="button"
                     onClick={() => connectIntegration(integration.provider)}
                   >
-                    연결하기
+                    {pendingIntegrationProvider === integration.provider ? "연결 중…" : "연결하기"}
                   </button>
                 )}
               </div>

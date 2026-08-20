@@ -1,5 +1,5 @@
-// 명세의 Notion·GitHub 연동 응답을 수집 범위 adapter로 변환한다.
-import { buildApiUrl, request } from "./apiClient";
+// 명세의 Notion·GitHub 연동 응답과 OAuth 팝업 시작을 화면 계약으로 변환한다.
+import { request } from "./apiClient";
 
 function unwrapData(result) {
   return result?.data ?? result ?? {};
@@ -20,9 +20,32 @@ function normalizeIntegration(integration = {}) {
   };
 }
 
+function createOAuthError(message, code) {
+  return Object.assign(new Error(message), { code });
+}
+
+function openOAuthPopup(provider) {
+  const width = 560;
+  const height = 720;
+  const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
+  const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
+  return window.open(
+    "",
+    `blocki-${provider.toLowerCase()}-oauth`,
+    `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
+  );
+}
+
+function getAuthorizeUrl(result) {
+  const authorizeUrl = unwrapData(result).authorizeUrl;
+  if (typeof authorizeUrl !== "string" || !authorizeUrl.startsWith("https://")) {
+    throw createOAuthError("OAuth 인증 주소를 받지 못했어요.", "OAUTH_AUTHORIZE_URL_INVALID");
+  }
+  return authorizeUrl;
+}
+
 export function createIntegrationApi(client = { request }, options = {}) {
-  const resolveApiUrl = options.buildApiUrl ?? buildApiUrl;
-  const navigate = options.navigate ?? ((url) => window.location.assign(url));
+  const openPopup = options.openPopup ?? openOAuthPopup;
 
   return {
     mode: "api",
@@ -32,10 +55,20 @@ export function createIntegrationApi(client = { request }, options = {}) {
     },
     async connectIntegration(provider) {
       const providerPath = provider.toLowerCase();
-      const path = `/integrations/${providerPath}/authorize`;
-      const location = resolveApiUrl(path);
-      navigate(location);
-      return { redirected: true, provider, location };
+      const popup = openPopup(provider);
+      if (!popup) {
+        throw createOAuthError("팝업이 차단됐어요. 브라우저에서 팝업을 허용해주세요.", "OAUTH_POPUP_BLOCKED");
+      }
+      try {
+        const result = await client.request(`/integrations/${providerPath}/authorize-url`, {
+          method: "POST",
+        });
+        popup.location.replace(getAuthorizeUrl(result));
+        return { popupOpened: true, provider };
+      } catch (error) {
+        popup.close();
+        throw error;
+      }
     },
     async disconnectIntegration(provider) {
       const result = await client.request(`/integrations/${provider.toLowerCase()}`, {

@@ -4,9 +4,14 @@ export const DOCUMENT_TYPES = Object.freeze({
   RESUME: "RESUME",
 });
 
+const DEFAULT_INTEGRATIONS = Object.freeze([
+  { provider: "GITHUB", status: "DISCONNECTED", itemCount: 0 },
+  { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
+]);
+
 export const initialDocumentState = {
   activeDocumentType: DOCUMENT_TYPES.PORTFOLIO,
-  integrations: [],
+  integrations: DEFAULT_INTEGRATIONS,
   documents: [],
   selectedDocumentId: null,
   selectedVersionId: null,
@@ -22,10 +27,17 @@ export function createInitialDocumentState(overrides = {}) {
   return {
     ...initialDocumentState,
     ...overrides,
-    integrations: overrides.integrations ?? [],
+    integrations: mergeIntegrations(overrides.integrations),
     documents: overrides.documents ?? [],
     missingData: overrides.missingData ?? [],
   };
+}
+
+function mergeIntegrations(integrations = []) {
+  return DEFAULT_INTEGRATIONS.map((fallback) => ({
+    ...fallback,
+    ...integrations.find((integration) => integration.provider === fallback.provider),
+  }));
 }
 
 function findDocumentByType(documents, type) {
@@ -70,7 +82,9 @@ export function documentReducer(state, action) {
       return selectLatestVersion(
         {
           ...state,
-          integrations: action.integrations ?? state.integrations,
+          integrations: action.integrations === undefined
+            ? state.integrations
+            : mergeIntegrations(action.integrations),
           documents: action.documents ?? state.documents,
           dataNotice: action.dataNotice ?? null,
           missingData: action.missingData ?? [],

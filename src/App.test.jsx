@@ -1,10 +1,12 @@
 // 앱 루트가 비로그인 사용자의 Blocki 인증 진입점을 제공하는지 검증한다.
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("App", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
+    Object.defineProperty(window, "opener", { configurable: true, value: null });
     window.history.replaceState({}, "", "/");
   });
 
@@ -20,5 +22,23 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Blocki 회원가입" })).toBeInTheDocument();
+  });
+
+  it("OAuth 콜백 팝업은 부모 창에 결과를 알리고 닫힌다", async () => {
+    const postMessage = vi.fn();
+    Object.defineProperty(window, "opener", { configurable: true, value: { postMessage } });
+    const close = vi.spyOn(window, "close").mockImplementation(() => undefined);
+    window.history.replaceState({}, "", "/oauth/callback?provider=github&result=success");
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "GitHub 연결을 확인했어요." })).toBeInTheDocument();
+    expect(postMessage).toHaveBeenCalledWith({
+      type: "blocki:oauth-complete",
+      provider: "GITHUB",
+      result: "success",
+      error: null,
+    }, window.location.origin);
+    expect(close).toHaveBeenCalled();
   });
 });

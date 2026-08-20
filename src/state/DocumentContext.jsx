@@ -57,6 +57,22 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
   }, [reload, skipLoad]);
 
   useEffect(() => {
+    const handleOAuthResult = (event) => {
+      if (event.origin !== window.location.origin || event.data?.type !== "blocki:oauth-complete") {
+        return;
+      }
+      if (event.data.result === "success") {
+        reload();
+        dispatch({ type: "SET_TOAST", message: `${event.data.provider === "GITHUB" ? "GitHub" : "Notion"} 연결을 확인했어요.` });
+      } else {
+        dispatch({ type: "SET_TOAST", message: "연결을 완료하지 못했어요. 다시 시도해주세요." });
+      }
+    };
+    window.addEventListener("message", handleOAuthResult);
+    return () => window.removeEventListener("message", handleOAuthResult);
+  }, [reload]);
+
+  useEffect(() => {
     if (!state.selectedDocumentId || !state.selectedVersionId || state.selectedVersion?.id === state.selectedVersionId) {
       return undefined;
     }
@@ -89,10 +105,11 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
   }, []);
 
   const connectIntegration = useCallback(async (provider) => {
+    setPendingIntegrationProvider(provider);
     try {
       const result = await api.connectIntegration(provider);
       if (!result?.integration) {
-        dispatch({ type: "SET_TOAST", message: `${provider === "GITHUB" ? "GitHub" : "Notion"} 인증 화면으로 이동합니다.` });
+        dispatch({ type: "SET_TOAST", message: `${provider === "GITHUB" ? "GitHub" : "Notion"} 로그인 창을 열었어요.` });
         return result;
       }
       dispatch({ type: "INTEGRATION_UPDATED", integration: result.integration });
@@ -101,6 +118,8 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     } catch (error) {
       dispatch({ type: "SET_TOAST", message: "연결 상태를 바꾸지 못했어요. 다시 시도해주세요." });
       throw error;
+    } finally {
+      setPendingIntegrationProvider(null);
     }
   }, [api]);
 

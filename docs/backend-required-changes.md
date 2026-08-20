@@ -8,7 +8,7 @@ description: 현재 Blocki 프론트엔드와 실제 연동하기 위해 백엔�
 
 ### OAuth 인가 시작 계약
 
-현재 `GET /api/v1/integrations/{provider}/authorize`는 Bearer 인증이 필요하지만 브라우저 전체 이동에는 `Authorization` 헤더를 넣을 수 없다. 이 상태에서는 로그인 사용자가 `연결하기`를 눌러도 `401`이 발생한다.
+현재 `GET /api/v1/integrations/{provider}/authorize`는 Bearer 인증이 필요하지만 OAuth 팝업 이동에는 `Authorization` 헤더를 넣을 수 없다. 프론트는 먼저 인증된 API 요청으로 인가 URL을 받은 뒤 팝업을 해당 URL로 이동한다.
 
 권장 계약은 인증된 JSON endpoint가 인가 URL을 반환하는 방식이다.
 
@@ -26,6 +26,24 @@ Authorization: Bearer <accessToken>
 ```
 
 프론트는 이 응답을 받은 뒤 `authorizeUrl`로 이동한다.
+
+`authorizeUrl`은 HTTPS 절대 URL이어야 한다. 프론트는 팝업이 차단되면 API 요청을 보내지 않고 사용자에게 팝업 허용 안내를 표시한다.
+
+### OAuth 콜백의 프론트 리디렉션
+
+OAuth 코드 교환과 토큰 암호화 저장은 백엔드가 처리한다. 완료 후에는 백엔드 화면이 아니라 프론트의 다음 경로로 리디렉션해야 한다.
+
+```text
+{FRONTEND_ORIGIN}/oauth/callback?provider=github&result=success
+```
+
+실패 시에는 `result=failed`와 오류 코드를 전달한다.
+
+```text
+{FRONTEND_ORIGIN}/oauth/callback?provider=notion&result=failed&error=OAUTH_AUTHORIZATION_DENIED
+```
+
+프론트 콜백 화면은 같은 출처의 부모 창에 완료 메시지를 보내고 팝업을 닫는다. 부모 창은 메시지를 받은 뒤 `GET /api/v1/integrations`를 다시 호출한다. OAuth access token과 refresh token은 프론트에 전달하지 않는다.
 
 ### 연결 해제 endpoint
 

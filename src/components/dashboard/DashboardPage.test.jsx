@@ -1,5 +1,5 @@
 // 대시보드의 연결 버튼·문서 탭·문서 목록을 검증한다.
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import DashboardPage from "./DashboardPage";
@@ -99,14 +99,28 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: "포트폴리오 생성" })).toBeInTheDocument();
   });
 
-  it("내 작업 화면에서 연결 상태를 바로 변경한다", async () => {
-    const user = userEvent.setup();
-    renderDashboard();
+  it("OAuth 완료 메시지를 받으면 백엔드 연동 상태를 다시 조회한다", async () => {
+    const api = createDocumentApiDouble();
+    api.listIntegrations
+      .mockResolvedValueOnce({ integrations: [
+        { provider: "GITHUB", status: "CONNECTED", itemCount: 4 },
+        { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
+      ] })
+      .mockResolvedValue({ integrations: [
+        { provider: "GITHUB", status: "CONNECTED", itemCount: 4 },
+        { provider: "NOTION", status: "CONNECTED", itemCount: 1 },
+      ] });
+    renderDashboard(api);
 
-    await user.click(await screen.findByRole("button", { name: "Notion 연결하기" }));
+    expect(await screen.findByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
+    await act(async () => {
+      window.dispatchEvent(new MessageEvent("message", {
+        data: { type: "blocki:oauth-complete", provider: "NOTION", result: "success" },
+        origin: window.location.origin,
+      }));
+    });
 
     expect(await screen.findByRole("button", { name: "Notion 연결됨, 눌러서 연결 해제" })).toBeEnabled();
-    expect(screen.getByText("2개 연결됨")).toBeInTheDocument();
   });
 
   it("연결됨 버튼을 누르면 연결하기 상태로 바뀐다", async () => {
@@ -191,5 +205,7 @@ describe("DashboardPage", () => {
 
     expect(await screen.findByRole("heading", { name: "포트폴리오 v1" })).toBeInTheDocument();
     expect(screen.getByText("누락된 데이터가 있어요")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
   });
 });
