@@ -36,9 +36,24 @@ function openOAuthPopup(provider) {
   );
 }
 
+function isAllowedAuthorizeUrl(authorizeUrl) {
+  if (typeof authorizeUrl !== "string") {
+    return false;
+  }
+  if (authorizeUrl.startsWith("https://")) {
+    return true;
+  }
+  try {
+    const parsed = new URL(authorizeUrl);
+    return parsed.protocol === "http:" && (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1");
+  } catch {
+    return false;
+  }
+}
+
 function getAuthorizeUrl(result) {
   const authorizeUrl = unwrapData(result).authorizeUrl;
-  if (typeof authorizeUrl !== "string" || !authorizeUrl.startsWith("https://")) {
+  if (!isAllowedAuthorizeUrl(authorizeUrl)) {
     throw createOAuthError("OAuth 인증 주소를 받지 못했어요.", "OAUTH_AUTHORIZE_URL_INVALID");
   }
   return authorizeUrl;

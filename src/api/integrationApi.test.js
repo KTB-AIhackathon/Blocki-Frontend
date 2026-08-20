@@ -41,6 +41,20 @@ describe("integration API specification", () => {
     expect(popup.location.replace).toHaveBeenCalledWith("https://github.com/login/oauth/authorize?client_id=client");
   });
 
+  it("로컬 스택의 http://localhost OAuth 주소도 팝업으로 연다", async () => {
+    const request = vi.fn().mockResolvedValue({
+      data: { authorizeUrl: "http://localhost:9100/github/login/oauth/authorize?client_id=stub" },
+    });
+    const popup = { close: vi.fn(), location: { replace: vi.fn() } };
+    const api = createIntegrationApi({ request }, { openPopup: vi.fn().mockReturnValue(popup) });
+
+    await api.connectIntegration("GITHUB");
+
+    expect(popup.location.replace).toHaveBeenCalledWith(
+      "http://localhost:9100/github/login/oauth/authorize?client_id=stub",
+    );
+  });
+
   it("팝업이 차단되면 API를 요청하지 않고 명확한 오류를 반환한다", async () => {
     const request = vi.fn();
     const api = createIntegrationApi({ request }, { openPopup: vi.fn().mockReturnValue(null) });
