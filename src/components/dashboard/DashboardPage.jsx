@@ -111,17 +111,9 @@ export default function DashboardPage() {
                 className="document-generation-button"
                 disabled={pendingDocumentType !== null}
                 type="button"
-                onClick={() => generateDocument("RESUME")}
+                onClick={() => generateDocument(activeDocumentType)}
               >
-                {pendingDocumentType === "RESUME" ? "이력서 생성 중…" : "이력서 생성"}
-              </button>
-              <button
-                className="document-generation-button"
-                disabled={pendingDocumentType !== null}
-                type="button"
-                onClick={() => generateDocument("PORTFOLIO")}
-              >
-                {pendingDocumentType === "PORTFOLIO" ? "포트폴리오 생성 중…" : "포트폴리오 생성"}
+                {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
               </button>
             </div>
             <DocumentTypeTabs navigateOnChange={false} />

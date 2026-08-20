@@ -95,8 +95,9 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("tab", { name: "이력서" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "이력서 생성" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "포트폴리오 생성" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "문서 생성" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "이력서 생성" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "포트폴리오 생성" })).not.toBeInTheDocument();
   });
 
   it("OAuth 완료 메시지를 받으면 백엔드 연동 상태를 다시 조회한다", async () => {
@@ -185,13 +186,19 @@ describe("DashboardPage", () => {
     expect(window.location.pathname).toBe("/workspace");
   });
 
-  it("두 생성 버튼이 각각 올바른 문서 유형을 생성한다", async () => {
+  it("단일 생성 버튼이 현재 선택한 탭의 문서 유형을 생성한다", async () => {
     const user = userEvent.setup();
     const api = createDocumentApiDouble();
     renderDashboard(api);
 
-    await user.click(await screen.findByRole("button", { name: "이력서 생성" }));
+    await user.click(await screen.findByRole("button", { name: "문서 생성" }));
 
+    expect(api.generateDocument).toHaveBeenCalledWith("PORTFOLIO");
+
+    await user.click(screen.getByRole("tab", { name: "이력서" }));
+    await user.click(screen.getByRole("button", { name: "문서 생성" }));
+
+    expect(api.generateDocument).toHaveBeenLastCalledWith("RESUME");
     expect(await screen.findByRole("heading", { name: "이력서 v1" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "이력서" })).toHaveAttribute("aria-selected", "true");
   });
