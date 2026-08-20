@@ -98,6 +98,8 @@ describe("DashboardPage", () => {
     renderDashboard();
 
     expect(await screen.findByText("GitHub")).toBeInTheDocument();
+    expect(document.querySelector('[data-provider-logo="GITHUB"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-provider-logo="NOTION"]')).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "안녕하세요, 마일스님." })).toBeInTheDocument();
     expect(screen.getByText("1개 연결됨")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "포트폴리오" })).toBeInTheDocument();
