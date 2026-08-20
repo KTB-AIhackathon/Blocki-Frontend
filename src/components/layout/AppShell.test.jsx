@@ -68,7 +68,7 @@ describe("AppShell", () => {
     expect(screen.queryByRole("region", { name: "AI 채팅" })).not.toBeInTheDocument();
   });
 
-  it("문서 카드에서 /documents로 이동하고 두 문서 탭은 같은 경로를 사용한다", async () => {
+  it("문서 카드에서 /documents로 이동하고 문서 유형 탭은 표시하지 않는다", async () => {
     const user = userEvent.setup();
     window.history.replaceState({}, "", "/workspace");
     renderShell();
@@ -76,9 +76,6 @@ describe("AppShell", () => {
     await user.click(await screen.findByRole("button", { name: "문서 열기" }));
     expect(window.location.pathname).toBe("/documents");
     expect(screen.getByRole("heading", { name: "포트폴리오", level: 1 })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("tab", { name: "이력서" }));
-    expect(window.location.pathname).toBe("/documents");
-    expect(screen.getByRole("heading", { name: "이력서", level: 1 })).toBeInTheDocument();
+    expect(screen.queryByRole("tablist", { name: "문서 유형" })).not.toBeInTheDocument();
   });
 });
