@@ -68,4 +68,31 @@ describe("DocumentWorkspace", () => {
 
     vi.unstubAllGlobals();
   });
+
+  it("failed_version_fetch_shows_error_state_toast_and_retry", async () => {
+    const api = {
+      listIntegrations: vi.fn().mockResolvedValue({ integrations: [] }),
+      listDocuments: vi.fn().mockResolvedValue({
+        documents: [{
+          id: "portfolio-1",
+          type: "PORTFOLIO",
+          title: "포트폴리오",
+          latestVersionId: "portfolio-v1",
+          versions: [{ id: "portfolio-v1", versionNumber: 1, createdAt: "2026-08-18T09:00:00Z" }],
+        }],
+      }),
+      getDocumentVersion: vi.fn().mockRejectedValue(new Error("문서를 불러오지 못했어요.")),
+    };
+
+    render(
+      <DocumentProvider api={api}>
+        <DocumentWorkspace />
+      </DocumentProvider>,
+    );
+
+    expect(await screen.findByText("문서를 불러오지 못했어요.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() => expect(api.getDocumentVersion).toHaveBeenCalledTimes(2));
+  });
 });

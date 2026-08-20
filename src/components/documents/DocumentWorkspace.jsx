@@ -38,11 +38,13 @@ export default function DocumentWorkspace() {
     selectedDocumentId,
     selectedVersionId,
     selectedVersion,
+    versionLoadError,
     dataNotice,
     missingData,
     canRetryDataNotice,
     reload,
     selectVersion,
+    retrySelectedVersion,
     downloadDocumentVersionPdf,
   } = useDocumentWorkspace();
   const activeDocument = documents.find((document) => document.type === activeDocumentType);
@@ -118,7 +120,16 @@ export default function DocumentWorkspace() {
               </button>
             </div>
           </div>
-          {selectedVersion ? <MarkdownPreview markdown={selectedVersion.markdown} /> : <p className="empty-document">문서를 불러오는 중이에요.</p>}
+          {selectedVersion ? (
+            <MarkdownPreview markdown={selectedVersion.markdown} />
+          ) : versionLoadError ? (
+            <div className="empty-document">
+              <p>문서를 불러오지 못했어요.</p>
+              <button className="text-button" type="button" onClick={retrySelectedVersion}>다시 시도</button>
+            </div>
+          ) : (
+            <p className="empty-document">문서를 불러오는 중이에요.</p>
+          )}
         </section>
       </div>
     </div>

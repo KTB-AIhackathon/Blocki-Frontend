@@ -21,6 +21,7 @@ export const initialDocumentState = {
   selectedDocumentId: null,
   selectedVersionId: null,
   selectedVersion: null,
+  versionLoadError: null,
   automation: DEFAULT_AUTOMATION,
   loadStatus: "IDLE",
   error: null,
@@ -71,6 +72,7 @@ function selectLatestVersion(state, documentType = state.activeDocumentType) {
       selectedDocumentId: null,
       selectedVersionId: null,
       selectedVersion: null,
+      versionLoadError: null,
     };
   }
 
@@ -81,6 +83,7 @@ function selectLatestVersion(state, documentType = state.activeDocumentType) {
     selectedDocumentId: document.id,
     selectedVersionId: version?.id ?? null,
     selectedVersion: version?.markdown ? version : null,
+    versionLoadError: null,
   };
 }
 
@@ -125,9 +128,12 @@ export function documentReducer(state, action) {
         selectedDocumentId: action.documentId,
         selectedVersionId: action.versionId,
         selectedVersion: action.version ?? null,
+        versionLoadError: null,
       };
     case "VERSION_LOADED":
-      return { ...state, selectedVersion: action.version };
+      return { ...state, selectedVersion: action.version, versionLoadError: null };
+    case "VERSION_LOAD_ERROR":
+      return { ...state, selectedVersion: null, versionLoadError: action.message };
     case "INTEGRATION_UPDATED":
       return { ...state, integrations: replaceIntegration(state.integrations, action.integration) };
     case "AUTOMATION_UPDATED":

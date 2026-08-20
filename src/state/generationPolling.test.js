@@ -16,6 +16,16 @@ describe("pollGeneration", () => {
     expect(sleep).toHaveBeenCalledWith(2000, expect.anything());
   });
 
+  it("uses_240_seconds_as_the_default_poll_duration", async () => {
+    const getGeneration = vi.fn().mockResolvedValue({ id: "generation-1", status: "RUNNING" });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      pollGeneration("generation-1", { getGeneration, sleep, intervalMs: 60_000 }),
+    ).rejects.toMatchObject({ code: "GENERATION_TIMEOUT" });
+    expect(sleep).toHaveBeenCalledTimes(4);
+  });
+
   it("throws a safe timeout error after the maximum duration", async () => {
     const getGeneration = vi.fn().mockResolvedValue({ id: "generation-1", status: "RUNNING" });
     const sleep = vi.fn().mockResolvedValue(undefined);

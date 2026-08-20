@@ -1,7 +1,5 @@
 // 명세의 회원가입·로그인·내 정보 API를 인증 화면 계약으로 변환한다.
-import { request, setAccessToken, resetApiAuth } from "./apiClient";
-
-const AUTH_SESSION_KEY = "blocki.authSession";
+import { AUTH_SESSION_KEY, request, setAccessToken, resetApiAuth } from "./apiClient";
 
 function getSessionStorage() {
   return typeof window === "undefined" ? null : window.sessionStorage;

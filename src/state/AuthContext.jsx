@@ -1,5 +1,6 @@
 // 인증 API와 reducer를 연결해 화면에서 사용할 인증 명령을 제공한다.
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { AUTH_EXPIRED_EVENT } from "../api/apiClient";
 import { getAppApi } from "../api/apiMode";
 import { authReducer, createInitialAuthState } from "./authReducer";
 import { navigateTo, ROUTES } from "../routing/appRouter";
@@ -91,6 +92,15 @@ export function AuthProvider({
     dispatch({ type: "LOGOUT" });
     navigateTo(ROUTES.LOGIN);
   }, [api]);
+
+  useEffect(() => {
+    const onExpired = () => {
+      dispatch({ type: "LOGOUT" });
+      navigateTo(ROUTES.LOGIN);
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, []);
 
   const value = useMemo(
     () => ({

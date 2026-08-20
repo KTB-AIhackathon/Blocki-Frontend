@@ -123,4 +123,18 @@ describe("documentReducer", () => {
     expect(next.dataNotice).toBe("PARTIAL_DATA");
     expect(next.missingData).toEqual([{ provider: "NOTION", reason: "연결되지 않음" }]);
   });
+
+  it("failed_version_fetch_shows_error_state_toast_and_retry", () => {
+    const loaded = documentReducer(createInitialDocumentState(), {
+      type: "LOAD_SUCCESS",
+      documents: [baseDocument],
+    });
+    const failed = documentReducer(loaded, {
+      type: "VERSION_LOAD_ERROR",
+      message: "문서를 불러오지 못했어요.",
+    });
+
+    expect(failed.selectedVersion).toBeNull();
+    expect(failed.versionLoadError).toBe("문서를 불러오지 못했어요.");
+  });
 });

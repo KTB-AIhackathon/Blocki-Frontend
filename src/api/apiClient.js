@@ -1,6 +1,8 @@
 // Spring 공개 API의 Bearer 인증·공통 응답·오류 처리를 적용한다.
 const API_BASE_PATH = "/api/v1";
-const ACCESS_TOKEN_KEY = "blocki.accessToken";
+export const ACCESS_TOKEN_KEY = "blocki.accessToken";
+export const AUTH_SESSION_KEY = "blocki.authSession";
+export const AUTH_EXPIRED_EVENT = "blocki:auth-expired";
 
 function getSessionStorage() {
   return typeof window === "undefined" ? null : window.sessionStorage;
@@ -39,6 +41,14 @@ export function resetApiAuth() {
 
 export function resetCsrfToken() {
   resetApiAuth();
+}
+
+function expireAuthSession() {
+  resetApiAuth();
+  getSessionStorage()?.removeItem(AUTH_SESSION_KEY);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  }
 }
 
 async function readResponseBody(response) {
@@ -112,6 +122,9 @@ export async function request(path, options = {}) {
   const response = await fetch(buildApiUrl(path), buildFetchOptions(options));
   if (options.responseType === "blob") {
     if (!response.ok) {
+      if (response.status === 401 && options.auth !== false) {
+        expireAuthSession();
+      }
       const body = await readResponseBody(response);
       throw normalizeApiError(body, response);
     }
@@ -119,6 +132,9 @@ export async function request(path, options = {}) {
   }
   const body = await readResponseBody(response);
   if (!response.ok) {
+    if (response.status === 401 && options.auth !== false) {
+      expireAuthSession();
+    }
     throw normalizeApiError(body, response);
   }
   return body;

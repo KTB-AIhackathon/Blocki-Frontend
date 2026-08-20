@@ -83,6 +83,16 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
   }, [reload, skipLoad]);
 
   useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        reload();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [reload]);
+
+  useEffect(() => {
     const handleOAuthResult = (event) => {
       if (event.origin !== window.location.origin || event.data?.type !== "blocki:oauth-complete") {
         return;
@@ -110,7 +120,14 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
           dispatch({ type: "VERSION_LOADED", version });
         }
       })
-      .catch(() => undefined);
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+        const message = error?.message ?? "문서를 불러오지 못했어요.";
+        dispatch({ type: "VERSION_LOAD_ERROR", message });
+        dispatch({ type: "SET_TOAST", message });
+      });
 
     return () => {
       active = false;
@@ -129,6 +146,24 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
       version: version.markdown ? version : null,
     });
   }, []);
+
+  const retrySelectedVersion = useCallback(() => {
+    if (!state.selectedDocumentId || !state.selectedVersionId) {
+      return;
+    }
+    dispatch({ type: "SELECT_VERSION", documentId: state.selectedDocumentId, versionId: state.selectedVersionId });
+    api.getDocumentVersion(state.selectedDocumentId, state.selectedVersionId)
+      .then((version) => {
+        if (version) {
+          dispatch({ type: "VERSION_LOADED", version });
+        }
+      })
+      .catch((error) => {
+        const message = error?.message ?? "문서를 불러오지 못했어요.";
+        dispatch({ type: "VERSION_LOAD_ERROR", message });
+        dispatch({ type: "SET_TOAST", message });
+      });
+  }, [api, state.selectedDocumentId, state.selectedVersionId]);
 
   const connectIntegration = useCallback(async (provider) => {
     setPendingIntegrationProvider(provider);
@@ -254,26 +289,45 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api]);
 
+  const generationToast = useCallback((documentType, status) => (
+    status === "PARTIALLY_SUCCEEDED"
+      ? "문서를 생성했지만 일부 데이터가 누락됐어요."
+      : `${documentType === "RESUME" ? "이력서" : "포트폴리오"}를 생성했어요.`
+  ), []);
+
   const generateDocument = useCallback(async (documentType) => {
     setPendingDocumentType(documentType);
     setDocumentType(documentType);
     try {
       const queued = await api.generateDocument(documentType);
-      const result = await pollGeneration(queued.id, {
-        getGeneration: api.getDocumentGeneration,
-      });
+      let result;
+      try {
+        result = await pollGeneration(queued.id, {
+          getGeneration: api.getDocumentGeneration,
+        });
+      } catch (error) {
+        if (error.code !== "GENERATION_TIMEOUT") {
+          throw error;
+        }
+        result = await api.getDocumentGeneration(queued.id).catch(() => null);
+        await reload();
+        if (result && ["SUCCEEDED", "PARTIALLY_SUCCEEDED"].includes(result.status)) {
+          dispatch({ type: "SET_TOAST", message: generationToast(documentType, result.status) });
+          return result;
+        }
+        dispatch({
+          type: "SET_TOAST",
+          message: "문서 생성이 아직 진행 중이에요. 잠시 후 목록을 확인해 주세요.",
+        });
+        return null;
+      }
       if (!["SUCCEEDED", "PARTIALLY_SUCCEEDED"].includes(result.status)) {
         throw Object.assign(new Error("문서를 생성하지 못했어요. 다시 시도해주세요."), {
           code: result.errorCode ?? "DOCUMENT_GENERATION_FAILED",
         });
       }
       await reload();
-      dispatch({
-        type: "SET_TOAST",
-        message: result.status === "PARTIALLY_SUCCEEDED"
-          ? "문서를 생성했지만 일부 데이터가 누락됐어요."
-          : `${documentType === "RESUME" ? "이력서" : "포트폴리오"}를 생성했어요.`,
-      });
+      dispatch({ type: "SET_TOAST", message: generationToast(documentType, result.status) });
       return result;
     } catch (error) {
       dispatch({ type: "SET_TOAST", message: error.message ?? "문서를 생성하지 못했어요. 다시 시도해주세요." });
@@ -281,7 +335,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     } finally {
       setPendingDocumentType(null);
     }
-  }, [api, reload, setDocumentType]);
+  }, [api, generationToast, reload, setDocumentType]);
 
   const dataNoticeView = useMemo(() => {
     const disconnectedData = state.loadStatus === "READY" ? getDisconnectedData(state.integrations) : [];
@@ -304,6 +358,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     connectedCount: getConnectedIntegrations(state).length,
     setDocumentType,
     selectVersion,
+    retrySelectedVersion,
     connectIntegration,
     disconnectIntegration,
     changeIntegration,
@@ -316,7 +371,7 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     reload,
     clearToast,
     getLatestVersionId,
-  }), [state, dataNoticeView, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, changeIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, pendingAutomation, updateDocumentGenerationAutomation, downloadDocumentVersionPdf, reload, clearToast]);
+  }), [state, dataNoticeView, setDocumentType, selectVersion, retrySelectedVersion, connectIntegration, disconnectIntegration, changeIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, pendingAutomation, updateDocumentGenerationAutomation, downloadDocumentVersionPdf, reload, clearToast]);
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }

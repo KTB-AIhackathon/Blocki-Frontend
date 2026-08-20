@@ -39,7 +39,7 @@ export async function pollGeneration(
     signal,
     sleep = sleepFor,
     intervalMs = 1000,
-    maxDurationMs = 60000,
+    maxDurationMs = 240000,
   },
 ) {
   const activeSignal = signal ?? new AbortController().signal;

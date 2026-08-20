@@ -1,6 +1,8 @@
 // 실제 백엔드 요청의 Bearer 헤더와 명세 오류 응답 매핑을 검증한다.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  AUTH_EXPIRED_EVENT,
+  AUTH_SESSION_KEY,
   request,
   requestRedirect,
   resetApiAuth,
@@ -120,5 +122,33 @@ describe("apiClient", () => {
     });
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: "manual" });
     expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ Authorization: "Bearer access-token" });
+  });
+
+  it("authenticated_401_clears_both_session_keys_and_resets_auth_state", async () => {
+    const onExpired = vi.fn();
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    window.sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ user: { id: "u1" }, expiresAt: Date.now() + 60_000 }));
+    setAccessToken("stale-token");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { code: "UNAUTHORIZED" } }), { status: 401 })));
+
+    await expect(request("/documents")).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(window.sessionStorage.getItem("blocki.accessToken")).toBeNull();
+    expect(window.sessionStorage.getItem(AUTH_SESSION_KEY)).toBeNull();
+    expect(onExpired).toHaveBeenCalledTimes(1);
+    window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  });
+
+  it("auth_false_401_does_not_trigger_session_expiry_cleanup", async () => {
+    const onExpired = vi.fn();
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    window.sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ user: { id: "u1" }, expiresAt: Date.now() + 60_000 }));
+    setAccessToken("keep-token");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { code: "UNAUTHORIZED" } }), { status: 401 })));
+
+    await expect(request("/auth/login", { auth: false })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(window.sessionStorage.getItem("blocki.accessToken")).toBe("keep-token");
+    expect(window.sessionStorage.getItem(AUTH_SESSION_KEY)).not.toBeNull();
+    expect(onExpired).not.toHaveBeenCalled();
+    window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
   });
 });
