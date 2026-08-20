@@ -8,7 +8,7 @@ export default function IntegrationSettings() {
   const { user } = useAuth();
   const {
     connectIntegration,
-    disconnectIntegration,
+    changeIntegration,
     integrations,
     pendingIntegrationProvider,
   } = useDocumentWorkspace();
@@ -59,15 +59,16 @@ export default function IntegrationSettings() {
                   </div>
                   {connected ? (
                     <button
-                      aria-label={pendingIntegrationProvider === integration.provider
-                        ? `${label} 연결 해제 중`
-                        : `${label} 연결됨, 눌러서 연결 해제`}
-                      className="integration-action-button is-connected"
+                      aria-label={`${label} 계정 변경`}
+                      className="integration-action-button integration-change-button"
                       disabled={pendingIntegrationProvider === integration.provider}
+                      title={integration.provider === "GITHUB"
+                        ? "다른 GitHub 계정을 선택합니다."
+                        : "다른 계정이 자동 선택되면 Notion에서 로그아웃한 뒤 다시 시도하세요."}
                       type="button"
-                      onClick={() => disconnectIntegration(integration.provider)}
+                      onClick={() => changeIntegration(integration.provider)}
                     >
-                      {pendingIntegrationProvider === integration.provider ? "해제 중…" : "연결됨"}
+                      {pendingIntegrationProvider === integration.provider ? "처리 중…" : "계정 변경"}
                     </button>
                   ) : (
                     <button
