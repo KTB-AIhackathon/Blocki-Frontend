@@ -23,6 +23,7 @@ export default function DashboardPage() {
     activeDocumentType,
     dataNotice,
     missingData,
+    canRetryDataNotice,
     reload,
     connectIntegration,
     disconnectIntegration,
@@ -97,8 +98,6 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={reload} /> : null}
-
       <section className="documents-panel" aria-labelledby="documents-heading">
         <div className="section-heading-row documents-heading-row">
           <div>
@@ -119,6 +118,8 @@ export default function DashboardPage() {
             <DocumentTypeTabs navigateOnChange={false} />
           </div>
         </div>
+
+        {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={canRetryDataNotice ? reload : undefined} /> : null}
 
         {activeDocumentVersions.length > 0 ? (
           <div className="document-list" key={activeDocumentType}>

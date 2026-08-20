@@ -96,7 +96,7 @@ export function documentReducer(state, action) {
     case "LOAD_ERROR":
       return { ...state, loadStatus: "ERROR", error: action.error };
     case "SET_DOCUMENT_TYPE":
-      return selectLatestVersion({ ...state, dataNotice: null, missingData: [] }, action.documentType);
+      return selectLatestVersion(state, action.documentType);
     case "SELECT_VERSION":
       return {
         ...state,
