@@ -2,6 +2,7 @@
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import { useAuth } from "../../state/AuthContext";
+import Icon from "../common/Icon";
 
 export default function AuthPage({ view = null }) {
   const { modalView } = useAuth();
@@ -11,12 +12,12 @@ export default function AuthPage({ view = null }) {
     <main className="auth-page">
       <section className="auth-page-card" aria-labelledby="auth-page-title">
         <div className="auth-page-intro">
-          <div className="auth-page-brand" aria-hidden="true">✦</div>
+          <div className="auth-page-brand"><Icon name="sparkles" size={24} /></div>
           <p className="auth-page-kicker">PERSONAL WORK ARCHIVE</p>
           <h1>작업이 곧<br />나를 설명하도록.</h1>
           <p>Notion과 GitHub에 흩어진 기록을 포트폴리오와 이력서로 정리해요.</p>
           <div className="auth-page-note">
-            <span aria-hidden="true">↗</span>
+            <Icon name="arrow-up-right" size={18} />
             <span>연결된 서비스가 문서의 수집 범위를 결정해요.</span>
           </div>
         </div>

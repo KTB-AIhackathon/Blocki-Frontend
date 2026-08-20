@@ -3,6 +3,7 @@ import { useAuth } from "../../state/AuthContext";
 import { useDocumentWorkspace } from "../../state/DocumentContext";
 import { navigateTo, ROUTES } from "../../routing/appRouter";
 import DataNotice from "../common/DataNotice";
+import Icon from "../common/Icon";
 import DocumentTypeTabs from "../documents/DocumentTypeTabs";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
@@ -102,23 +103,23 @@ export default function DashboardPage() {
 
       <section className="documents-panel" aria-labelledby="documents-heading">
         <div className="section-heading-row documents-heading-row">
-          <div>
+          <div className="documents-heading-copy">
             <p className="section-kicker">DOCUMENTS</p>
-            <h2 id="documents-heading">나의 문서</h2>
+            <h2 className="visually-hidden" id="documents-heading">문서 목록</h2>
           </div>
-          <div className="document-controls">
-            <div className="document-generation-actions" aria-label="문서 생성">
-              <button
-                className="document-generation-button"
-                disabled={!canGenerateDocument || pendingDocumentType !== null}
-                type="button"
-                onClick={() => generateDocument(activeDocumentType)}
-              >
-                {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
-              </button>
-            </div>
-            <DocumentTypeTabs navigateOnChange={false} />
+          <div className="document-generation-actions" aria-label="문서 생성">
+            <button
+              className="document-generation-button"
+              disabled={!canGenerateDocument || pendingDocumentType !== null}
+              type="button"
+              onClick={() => generateDocument(activeDocumentType)}
+            >
+              {pendingDocumentType !== null ? "문서 생성 중…" : "문서 생성"}
+            </button>
           </div>
+        </div>
+        <div className="document-tabs-row">
+          <DocumentTypeTabs navigateOnChange={false} />
         </div>
 
         {dataNotice ? <DataNotice type={dataNotice} missingData={missingData} onRetry={canRetryDataNotice ? reload : undefined} /> : null}
@@ -128,7 +129,7 @@ export default function DashboardPage() {
             {activeDocumentVersions.map(({ document, version }) => {
               return (
                 <article className="document-card" key={`${document.id}-${version.id}`}>
-                  <div className="document-card-mark" aria-hidden="true">{document.type === "PORTFOLIO" ? "✦" : "↗"}</div>
+                  <div className="document-card-mark"><Icon name="file-text" size={22} /></div>
                   <div className="document-card-copy">
                     <p className="document-type-label">{document.type === "PORTFOLIO" ? "PORTFOLIO" : "RESUME"}</p>
                     <h3>{document.title} v{version.versionNumber}</h3>
@@ -142,7 +143,7 @@ export default function DashboardPage() {
                       navigateTo(ROUTES.DOCUMENTS);
                     }}
                   >
-                    문서 열기 <span aria-hidden="true">↗</span>
+                    문서 열기 <Icon name="arrow-up-right" size={14} />
                   </button>
                 </article>
               );
