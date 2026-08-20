@@ -2,6 +2,7 @@
 import { useAuth } from "../../state/AuthContext";
 import { useDocumentWorkspace } from "../../state/DocumentContext";
 import AutomationScheduleSettings from "./AutomationScheduleSettings";
+import ProviderLogo from "../common/ProviderLogo";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
 
@@ -53,7 +54,12 @@ export default function IntegrationSettings() {
               const connected = integration.status === "CONNECTED";
               return (
                 <div className={`settings-integration-card ${connected ? "is-connected" : ""}`} key={integration.provider}>
-                  <div className="integration-provider-mark" aria-hidden="true">{integration.provider === "GITHUB" ? "GH" : "N"}</div>
+                  <div
+                    className={`integration-provider-mark is-${integration.provider.toLowerCase()}`}
+                    aria-hidden="true"
+                  >
+                    <ProviderLogo provider={integration.provider} />
+                  </div>
                   <div className="settings-integration-copy">
                     <strong>{label}</strong>
                     <span>{connected ? integration.accountLabel ?? "연결된 계정" : "연결 안 됨"}</span>

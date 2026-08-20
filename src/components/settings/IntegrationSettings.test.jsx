@@ -49,11 +49,13 @@ describe("IntegrationSettings", () => {
     expect(screen.getByText("마일스")).toBeInTheDocument();
     expect(screen.getByText("miles@example.com")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "소스 연동 상태" })).toBeInTheDocument();
+    expect(document.querySelector('[data-provider-logo="GITHUB"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-provider-logo="NOTION"]')).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "GitHub 계정 변경" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /저장/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "저장" })).toBeDisabled();
     expect(screen.queryByText("연결 해제", { exact: true })).not.toBeInTheDocument();
   });
 

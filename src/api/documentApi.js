@@ -123,13 +123,13 @@ export function createDocumentApi(client = { request }) {
     },
 
     async updateDocumentGenerationAutomation(enabled, schedule = {}) {
-      const body = {
-        enabled,
-        schedule: {
-          dayOfWeek: schedule.dayOfWeek,
-          time: schedule.time,
-        },
-      };
+      const body = { enabled };
+      if (schedule.dayOfWeek !== undefined || schedule.time !== undefined) {
+        body.schedule = {
+          ...(schedule.dayOfWeek !== undefined ? { dayOfWeek: schedule.dayOfWeek } : {}),
+          ...(schedule.time !== undefined ? { time: schedule.time } : {}),
+        };
+      }
       console.log("[documentApi] PUT /document-generation-automation 요청", body);
       try {
         const result = await client.request("/document-generation-automation", {
