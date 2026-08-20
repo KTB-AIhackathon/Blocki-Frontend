@@ -145,7 +145,7 @@ export function createMockApi() {
       const normalizedEmail = email.trim().toLowerCase();
       const registeredUser = state.registeredUser?.email === normalizedEmail
         ? state.registeredUser
-        : demoUser;
+        : { ...demoUser, name: normalizedEmail.split("@")[0] };
       state.user = { ...registeredUser, email: normalizedEmail };
       storeSessionUser(state.user);
       return delay({

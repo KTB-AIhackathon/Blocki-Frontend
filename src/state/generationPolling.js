@@ -1,5 +1,5 @@
 // 생성 상태를 일정 간격으로 조회하고 terminal 결과에서 안전하게 멈춘다.
-const TERMINAL_STATUSES = new Set(["SUCCEEDED", "NEEDS_INPUT", "UNSUPPORTED", "FAILED"]);
+const TERMINAL_STATUSES = new Set(["SUCCEEDED", "PARTIALLY_SUCCEEDED", "NEEDS_INPUT", "UNSUPPORTED", "FAILED"]);
 
 function createTimeoutError() {
   return Object.assign(new Error("생성 시간이 초과되었습니다. 다시 시도해주세요."), {

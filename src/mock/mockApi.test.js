@@ -39,4 +39,12 @@ describe("mock auth api", () => {
 
     expect(result.user.name).toBe("임태현");
   });
+
+  it("가입 정보가 없는 이메일 로그인에서도 데모 이름 민서를 사용하지 않는다", async () => {
+    const api = createMockApi();
+
+    const result = await api.login({ email: "taehyun@example.com", password: "Password1" });
+
+    expect(result.user.name).toBe("taehyun");
+  });
 });

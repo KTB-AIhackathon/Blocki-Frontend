@@ -70,8 +70,8 @@ export function documentReducer(state, action) {
       return selectLatestVersion(
         {
           ...state,
-          integrations: action.integrations,
-          documents: action.documents,
+          integrations: action.integrations ?? state.integrations,
+          documents: action.documents ?? state.documents,
           dataNotice: action.dataNotice ?? null,
           missingData: action.missingData ?? [],
           loadStatus: "READY",

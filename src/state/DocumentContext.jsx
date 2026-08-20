@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { getDocumentApi } from "../api/apiMode";
 import { createInitialDocumentState, documentReducer, getConnectedIntegrations } from "./documentReducer";
+import { pollGeneration } from "./generationPolling";
 
 const defaultDocumentApi = getDocumentApi();
 const DocumentContext = createContext(null);
@@ -13,20 +14,36 @@ function getLatestVersionId(document) {
 export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad = false }) {
   const [state, dispatch] = useReducer(documentReducer, undefined, createInitialDocumentState);
   const [pendingIntegrationProvider, setPendingIntegrationProvider] = useState(null);
+  const [pendingDocumentType, setPendingDocumentType] = useState(null);
 
   const reload = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
+    const [integrationResult, documentResult] = await Promise.allSettled([
+      api.listIntegrations(),
+      api.listDocuments(),
+    ]);
+    if (integrationResult.status === "rejected" && documentResult.status === "rejected") {
+      dispatch({ type: "LOAD_ERROR", error: documentResult.reason });
+      return;
+    }
     try {
-      const [integrationResult, documentResult] = await Promise.all([
-        api.listIntegrations(),
-        api.listDocuments(),
-      ]);
+      const documentData = documentResult.status === "fulfilled" ? documentResult.value : null;
+      const missingData = [...(documentData?.missingData ?? [])];
+      if (integrationResult.status === "rejected") {
+        missingData.push("GitHub·Notion 연결 상태");
+      }
+      if (documentResult.status === "rejected") {
+        missingData.push("문서 목록");
+      }
       dispatch({
         type: "LOAD_SUCCESS",
-        integrations: integrationResult.integrations ?? [],
-        documents: documentResult.documents ?? [],
-        dataNotice: documentResult.dataNotice ?? null,
-        missingData: documentResult.missingData ?? [],
+        integrations: integrationResult.status === "fulfilled"
+          ? integrationResult.value.integrations ?? []
+          : undefined,
+        documents: documentData?.documents,
+        dataNotice: documentData?.dataNotice
+          ?? (missingData.length > 0 ? "PARTIAL_DATA" : null),
+        missingData,
       });
     } catch (error) {
       dispatch({ type: "LOAD_ERROR", error });
@@ -102,6 +119,35 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     }
   }, [api]);
 
+  const generateDocument = useCallback(async (documentType) => {
+    setPendingDocumentType(documentType);
+    setDocumentType(documentType);
+    try {
+      const queued = await api.generateDocument(documentType);
+      const result = await pollGeneration(queued.id, {
+        getGeneration: api.getDocumentGeneration,
+      });
+      if (!["SUCCEEDED", "PARTIALLY_SUCCEEDED"].includes(result.status)) {
+        throw Object.assign(new Error("문서를 생성하지 못했어요. 다시 시도해주세요."), {
+          code: result.errorCode ?? "DOCUMENT_GENERATION_FAILED",
+        });
+      }
+      await reload();
+      dispatch({
+        type: "SET_TOAST",
+        message: result.status === "PARTIALLY_SUCCEEDED"
+          ? "문서를 생성했지만 일부 데이터가 누락됐어요."
+          : `${documentType === "RESUME" ? "이력서" : "포트폴리오"}를 생성했어요.`,
+      });
+      return result;
+    } catch (error) {
+      dispatch({ type: "SET_TOAST", message: error.message ?? "문서를 생성하지 못했어요. 다시 시도해주세요." });
+      return null;
+    } finally {
+      setPendingDocumentType(null);
+    }
+  }, [api, reload, setDocumentType]);
+
   const value = useMemo(() => ({
     ...state,
     connectedIntegrations: getConnectedIntegrations(state),
@@ -111,10 +157,12 @@ export function DocumentProvider({ api = defaultDocumentApi, children, skipLoad 
     connectIntegration,
     disconnectIntegration,
     pendingIntegrationProvider,
+    generateDocument,
+    pendingDocumentType,
     reload,
     clearToast,
     getLatestVersionId,
-  }), [state, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, pendingIntegrationProvider, reload, clearToast]);
+  }), [state, setDocumentType, selectVersion, connectIntegration, disconnectIntegration, pendingIntegrationProvider, generateDocument, pendingDocumentType, reload, clearToast]);
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;
 }

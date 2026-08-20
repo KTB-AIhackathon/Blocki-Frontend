@@ -92,6 +92,7 @@ export function createDocumentMockApi({ scenario = "SUCCESS", initialIntegration
     documents: seed,
     scenario,
   };
+  const generationJobs = new Map();
 
   return {
     mode: "mock",
@@ -146,6 +147,36 @@ export function createDocumentMockApi({ scenario = "SUCCESS", initialIntegration
         item.provider === provider ? integration : item
       ));
       return delay({ integration });
+    },
+    async generateDocument(type) {
+      const document = state.documents.summaries.find((item) => item.type === type);
+      const versionNumber = (document?.versions.at(-1)?.versionNumber ?? 0) + 1;
+      const documentId = document?.id ?? `doc-${type.toLowerCase()}`;
+      const version = createVersion(documentId, type, versionNumber, new Date().toISOString());
+      if (document) {
+        document.latestVersionId = version.id;
+        document.versions.push({ id: version.id, versionNumber, createdAt: version.createdAt });
+      } else {
+        state.documents.summaries.push({
+          id: documentId,
+          type,
+          title: version.title,
+          latestVersionId: version.id,
+          versions: [{ id: version.id, versionNumber, createdAt: version.createdAt }],
+        });
+      }
+      state.documents.versions[version.id] = version;
+      const job = {
+        id: `job-${type.toLowerCase()}-${versionNumber}`,
+        status: "SUCCEEDED",
+        documentId,
+        versionId: version.id,
+      };
+      generationJobs.set(job.id, job);
+      return delay(job);
+    },
+    async getDocumentGeneration(jobId) {
+      return delay(generationJobs.get(jobId) ?? null);
     },
   };
 }

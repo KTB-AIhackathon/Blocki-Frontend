@@ -1,13 +1,18 @@
 // 명세의 인증 endpoint와 사용자 DTO가 API adapter에 연결되는지 검증한다.
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createAuthApi } from "./authApi";
+import { resetApiAuth } from "./apiClient";
+
+beforeEach(() => {
+  resetApiAuth();
+  window.sessionStorage.clear();
+});
 
 describe("authApi", () => {
-  it("uses the API contract for signup, login, and current user", async () => {
+  it("회원가입과 로그인 계약을 사용하고 로그인 사용자를 세션에서 복원한다", async () => {
     const request = vi.fn()
       .mockResolvedValueOnce({ data: { id: "user-1", name: "김블로", email: "new@example.com" } })
-      .mockResolvedValueOnce({ data: { accessToken: "token-1", tokenType: "Bearer", expiresAt: "2026-08-19T10:00:00Z", user: { id: "user-1" } } })
-      .mockResolvedValueOnce({ data: { id: "user-1" } });
+      .mockResolvedValueOnce({ data: { accessToken: "token-1", tokenType: "Bearer", expiresAt: "2099-08-19T10:00:00Z", user: { id: "user-1", name: "김블로", email: "new@example.com" } } });
     const authApi = createAuthApi({ request });
 
     const signupPayload = { password: "Password1", name: "김블로", email: "new@example.com" };
@@ -25,6 +30,7 @@ describe("authApi", () => {
       body: { email: "new@example.com", password: "Password1" },
       auth: false,
     });
-    expect(request).toHaveBeenNthCalledWith(3, "/users/me");
+    await expect(authApi.getCurrentUser()).resolves.toMatchObject({ id: "user-1", name: "김블로" });
+    expect(request).toHaveBeenCalledTimes(2);
   });
 });

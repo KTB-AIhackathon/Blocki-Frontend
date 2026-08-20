@@ -28,7 +28,8 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("tab", { name: "이력서" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "새 문서 만들기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "이력서 생성" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "포트폴리오 생성" })).toBeInTheDocument();
   });
 
   it("내 작업 화면에서 연결 상태를 바로 변경한다", async () => {
@@ -73,8 +74,55 @@ describe("DashboardPage", () => {
     });
     renderDashboard(api);
 
-    expect(await screen.findByRole("heading", { name: "첫 번째 포트폴리오" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "두 번째 포트폴리오" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "첫 번째 포트폴리오 v1" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "두 번째 포트폴리오 v1" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /문서 열기/ })).toHaveLength(2);
+  });
+
+  it("이력서 탭에서 한 문서의 모든 버전을 최신순 목록으로 보여주고 현재 경로를 유지한다", async () => {
+    window.history.replaceState({}, "", "/workspace");
+    const user = userEvent.setup();
+    const api = createDocumentMockApi();
+    api.listDocuments = async () => ({
+      documents: [{
+        id: "resume-1",
+        type: "RESUME",
+        title: "임태현 이력서",
+        latestVersionId: "resume-v2",
+        versions: [
+          { id: "resume-v1", versionNumber: 1, createdAt: "2026-08-18T09:00:00Z" },
+          { id: "resume-v2", versionNumber: 2, createdAt: "2026-08-19T09:00:00Z" },
+        ],
+      }],
+    });
+    renderDashboard(api);
+
+    await user.click(await screen.findByRole("tab", { name: "이력서" }));
+
+    expect(await screen.findByRole("heading", { name: "임태현 이력서 v2" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "임태현 이력서 v1" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/workspace");
+  });
+
+  it("두 생성 버튼이 각각 올바른 문서 유형을 생성한다", async () => {
+    const user = userEvent.setup();
+    const api = createDocumentMockApi();
+    renderDashboard(api);
+
+    await user.click(await screen.findByRole("button", { name: "이력서 생성" }));
+
+    expect(await screen.findByRole("heading", { name: "이력서 v2" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "이력서" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("연동 상태 조회가 실패해도 문서와 누락 안내를 유지한다", async () => {
+    const api = createDocumentMockApi();
+    api.listIntegrations = async () => {
+      throw new Error("integration unavailable");
+    };
+    renderDashboard(api);
+
+    expect(await screen.findByRole("heading", { name: "포트폴리오 v1" })).toBeInTheDocument();
+    expect(screen.getByText("누락된 데이터가 있어요")).toBeInTheDocument();
   });
 });

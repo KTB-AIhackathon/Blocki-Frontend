@@ -7,11 +7,19 @@ import { AuthProvider, useAuth } from "./state/AuthContext";
 import { DocumentProvider, useDocumentWorkspace } from "./state/DocumentContext";
 import { isPrivateRoute, isPublicRoute, navigateTo, ROUTES, useAppPathname } from "./routing/appRouter";
 
+function PrivateApp() {
+  const { clearToast: clearDocumentToast, toast: documentToast } = useDocumentWorkspace();
+  return (
+    <>
+      <AppShell />
+      <Toast message={documentToast} onClose={clearDocumentToast} />
+    </>
+  );
+}
+
 function AppContent() {
   const { clearToast: clearAuthToast, status, toast: authToast } = useAuth();
-  const { clearToast: clearDocumentToast, toast: documentToast } = useDocumentWorkspace();
   const pathname = useAppPathname();
-  const toast = authToast ?? documentToast;
 
   useEffect(() => {
     if (status === "AUTHENTICATED" && !isPrivateRoute(pathname)) {
@@ -29,11 +37,15 @@ function AppContent() {
   return (
     <>
       {status === "AUTHENTICATED"
-        ? <AppShell />
+        ? (
+          <DocumentProvider>
+            <PrivateApp />
+          </DocumentProvider>
+        )
         : <AuthPage view={pathname === ROUTES.SIGNUP ? "SIGNUP" : "LOGIN"} />}
       <Toast
-        message={toast}
-        onClose={authToast ? clearAuthToast : clearDocumentToast}
+        message={authToast}
+        onClose={clearAuthToast}
       />
     </>
   );
@@ -42,9 +54,7 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <DocumentProvider>
-        <AppContent />
-      </DocumentProvider>
+      <AppContent />
     </AuthProvider>
   );
 }

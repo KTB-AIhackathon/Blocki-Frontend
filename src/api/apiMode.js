@@ -25,11 +25,11 @@ const realDocumentApi = {
   mode: "api",
 };
 
-export function getAppApi({ mode = import.meta.env.VITE_DATA_MODE ?? "mock" } = {}) {
+export function getAppApi({ mode = import.meta.env.VITE_DATA_MODE ?? "api" } = {}) {
   return mode === "api" ? realApi : mockApi;
 }
 
-export function getDocumentApi({ mode = import.meta.env.VITE_DATA_MODE ?? "mock" } = {}) {
+export function getDocumentApi({ mode = import.meta.env.VITE_DATA_MODE ?? "api" } = {}) {
   return mode === "api" ? realDocumentApi : createDocumentMockApi();
 }
 
