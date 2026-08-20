@@ -992,6 +992,30 @@ body {
   letter-spacing: -0.03em;
 }
 
+.automation-schedule-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.automation-schedule-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.automation-schedule-status span {
+  color: #6f8688;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.automation-schedule-status span.is-on {
+  color: #15803d;
+}
+
 .settings-user-list {
   display: grid;
   gap: 0;
@@ -1120,7 +1144,8 @@ body {
   outline-offset: 1px;
 }
 
-.automation-hour-select {
+.automation-hour-select,
+.automation-minute-select {
   min-width: 104px;
 }
 

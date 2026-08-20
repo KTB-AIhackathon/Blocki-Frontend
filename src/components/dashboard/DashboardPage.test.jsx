@@ -112,28 +112,15 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("button", { name: "포트폴리오 생성" })).not.toBeInTheDocument();
   });
 
-  it("문서 자동화 토글을 화면 오른쪽 상단에 표시하고 화면에서만 전환한다", async () => {
-    const user = userEvent.setup();
+  it("워크스페이스 오른쪽 상단에 문서 자동화 버튼을 두지 않는다", async () => {
     const api = createDocumentApiDouble();
     renderDashboard(api);
 
-    const automationToggle = await screen.findByRole("switch", { name: "문서 자동화" });
-    const generateButton = screen.getByRole("button", { name: "문서 생성" });
-
-    expect(api.getDocumentGenerationAutomation).toHaveBeenCalledTimes(1);
-    expect(automationToggle.closest(".dashboard-header-actions")).not.toBeNull();
-    expect(generateButton.closest(".document-generation-actions")).not.toBeNull();
-    expect(generateButton.closest(".dashboard-header-actions")).toBeNull();
-    expect(automationToggle).toHaveAttribute("aria-checked", "false");
-
-    await user.click(automationToggle);
-
-    expect(api.updateDocumentGenerationAutomation).toHaveBeenCalledWith(true, {
-      dayOfWeek: "MONDAY",
-      time: "21:00",
-      timezone: "Asia/Seoul",
-    });
-    expect(automationToggle).toHaveAttribute("aria-checked", "true");
+    expect(await screen.findByRole("button", { name: "문서 생성" })).toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "문서 자동화" })).not.toBeInTheDocument();
+    expect(screen.queryByText("문서 자동화")).not.toBeInTheDocument();
+    expect(document.querySelector(".dashboard-header-actions")).toBeNull();
+    expect(api.updateDocumentGenerationAutomation).not.toHaveBeenCalled();
   });
 
   it("OAuth 완료 메시지를 받으면 백엔드 연동 상태를 다시 조회한다", async () => {

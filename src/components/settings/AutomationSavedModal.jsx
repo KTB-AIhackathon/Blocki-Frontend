@@ -1,7 +1,8 @@
 // 자동화 시간 저장 완료를 알리는 확인 모달.
 import Modal from "../common/Modal";
 
-export default function AutomationSavedModal({ dayLabel, hour, onClose }) {
+export default function AutomationSavedModal({ dayLabel, hour, minute = "00", onClose }) {
+  const minuteLabel = Number(minute) > 0 ? ` ${Number(minute)}분` : "";
   return (
     <Modal title="자동화 시간 저장 완료" onClose={onClose} className="automation-saved-modal">
       <header className="automation-saved-modal-header">
@@ -13,7 +14,7 @@ export default function AutomationSavedModal({ dayLabel, hour, onClose }) {
       </header>
       <div className="automation-saved-modal-body">
         <p>
-          매주 {dayLabel} {Number(hour)}시에 이력서와 포트폴리오를 자동으로 생성해요.
+          매주 {dayLabel} {Number(hour)}시{minuteLabel}에 이력서와 포트폴리오를 자동으로 생성해요.
         </p>
         <button type="button" className="button button-primary" onClick={onClose}>
           확인

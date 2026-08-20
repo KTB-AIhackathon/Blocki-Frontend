@@ -8,27 +8,6 @@ import ProviderLogo from "../common/ProviderLogo";
 import DocumentTypeTabs from "../documents/DocumentTypeTabs";
 
 const providerLabels = { GITHUB: "GitHub", NOTION: "Notion" };
-const automationDayLabels = {
-  MONDAY: "월요일",
-  TUESDAY: "화요일",
-  WEDNESDAY: "수요일",
-  THURSDAY: "목요일",
-  FRIDAY: "금요일",
-  SATURDAY: "토요일",
-  SUNDAY: "일요일",
-};
-
-function formatAutomationSchedule(schedule = {}) {
-  const day = automationDayLabels[schedule.dayOfWeek] ?? schedule.dayOfWeek ?? "월요일";
-  const [hourValue, minuteValue] = (schedule.time ?? "21:00").split(":").map(Number);
-  if (!Number.isFinite(hourValue)) {
-    return `매주 ${day}`;
-  }
-  const period = hourValue >= 12 ? "오후" : "오전";
-  const hour = hourValue % 12 || 12;
-  const minute = Number.isFinite(minuteValue) && minuteValue > 0 ? ` ${minuteValue}분` : "";
-  return `매주 ${day} · ${period} ${hour}시${minute}`;
-}
 
 function formatDate(value) {
   if (!value) {
@@ -53,9 +32,6 @@ export default function DashboardPage() {
     pendingIntegrationProvider,
     generateDocument,
     pendingDocumentType,
-    automation,
-    pendingAutomation,
-    updateDocumentGenerationAutomation,
     selectVersion,
   } = useDocumentWorkspace();
   const activeDocuments = documents.filter((document) => document.type === activeDocumentType);
@@ -63,8 +39,6 @@ export default function DashboardPage() {
     .flatMap((document) => document.versions.map((version) => ({ document, version })))
     .sort((left, right) => new Date(right.version.createdAt) - new Date(left.version.createdAt));
   const displayName = user?.name ?? user?.email?.split("@")[0] ?? "작업자";
-  const automationEnabled = automation?.enabled === true;
-  const automationSchedule = formatAutomationSchedule(automation?.schedule);
   const canGenerateDocument = integrations.length === 2
     && integrations.every((integration) => integration.status === "CONNECTED");
 
@@ -75,29 +49,6 @@ export default function DashboardPage() {
           <p className="page-kicker">DASHBOARD</p>
           <h1>안녕하세요, {displayName}님.</h1>
           <p className="page-lede">오늘의 작업 기록을 트래킹하고, 나를 설명하는 문서로 정리해보세요.</p>
-        </div>
-        <div className="dashboard-header-actions">
-          <div className="document-automation-control">
-            <div className="document-automation-copy">
-              <strong>문서 자동화</strong>
-              <span>{automationSchedule}</span>
-            </div>
-            <button
-              aria-checked={automationEnabled}
-              aria-label="문서 자동화"
-              className={`document-automation-toggle ${automationEnabled ? "is-on" : ""}`}
-              disabled={pendingAutomation}
-              role="switch"
-              title="서버 스케줄러가 설정된 시간에 문서를 생성합니다."
-              type="button"
-              onClick={() => updateDocumentGenerationAutomation(!automationEnabled)}
-            >
-              <span className="document-automation-toggle-track" aria-hidden="true">
-                <span className="document-automation-toggle-thumb" />
-              </span>
-              <span className="document-automation-toggle-state">{pendingAutomation ? "저장 중…" : automationEnabled ? "켜짐" : "꺼짐"}</span>
-            </button>
-          </div>
         </div>
       </header>
 

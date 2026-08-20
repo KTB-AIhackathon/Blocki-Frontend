@@ -79,7 +79,7 @@ describe("document API specification", () => {
   });
 
   it("문서 자동화 시간을 변경하면 enabled와 schedule을 함께 전송한다", async () => {
-    const schedule = { dayOfWeek: "WEDNESDAY", time: "09:00" };
+    const schedule = { dayOfWeek: "WEDNESDAY", time: "09:20" };
     const request = vi.fn().mockResolvedValue({
       data: {
         enabled: true,
