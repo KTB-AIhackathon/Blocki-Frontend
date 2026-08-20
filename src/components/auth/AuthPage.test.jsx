@@ -7,7 +7,6 @@ import { AuthProvider } from "../../state/AuthContext";
 
 function renderAuthPage() {
   const api = {
-    mode: "mock",
     getCurrentUser: vi.fn().mockResolvedValue(null),
     login: vi.fn().mockResolvedValue({ user: null }),
     signup: vi.fn().mockResolvedValue({ ok: true }),

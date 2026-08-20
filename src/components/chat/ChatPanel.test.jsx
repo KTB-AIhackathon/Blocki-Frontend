@@ -27,7 +27,6 @@ describe("ChatPanel", () => {
   it("creates a session for the first message and polls the generation", async () => {
     const user = userEvent.setup();
     const api = {
-      mode: "mock",
       createSession: vi.fn().mockResolvedValue({
         session: { id: "session-new", title: "새 자동화" },
         message: { id: "message-new", role: "USER", content: "매일 오전 9시에 메일 보내줘" },
@@ -60,7 +59,6 @@ describe("ChatPanel", () => {
   it("sends an existing session message and exposes retry only for failed generations", async () => {
     const user = userEvent.setup();
     const api = {
-      mode: "mock",
       sendMessage: vi.fn().mockResolvedValue({
         message: { id: "message-new", role: "USER", content: "다시 확인해줘" },
         generation: queuedGeneration("generation-2"),
@@ -71,6 +69,7 @@ describe("ChatPanel", () => {
         .mockResolvedValueOnce({ id: "generation-3", status: "SUCCEEDED", assistantMessage: "재시도 완료" }),
     };
     const initialState = createInitialWorkspaceState({
+      selectedSessionId: "session-1",
       chatMessages: [],
       generation: { id: "generation-old", status: "FAILED", errorMessage: "생성에 실패했어요." },
     });
@@ -91,7 +90,7 @@ describe("ChatPanel", () => {
 
   it("opens the login modal instead of sending for a guest", async () => {
     const user = userEvent.setup();
-    const api = { mode: "mock" };
+    const api = {};
     renderChat({
       api,
       initialState: createInitialWorkspaceState({ chatMessages: [] }),

@@ -1,25 +1,20 @@
 // 세션·달력·보관함·채팅 화면의 상태 전이를 순수 reducer로 관리한다.
-import { DEMO_WEEK_START, demoMessages, demoSessions, demoWorkflows } from "../mock/fixtures";
-
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
+import { getMondayWeekStart } from "../domain/calendar/dateUtils";
 
 export function createInitialWorkspaceState(overrides = {}) {
-  const defaultWorkflow = clone(demoWorkflows["session-1"]);
   return {
-    sessions: clone(demoSessions),
-    selectedSessionId: "session-1",
+    sessions: [],
+    selectedSessionId: null,
     view: "ALL_AUTOMATIONS",
-    weekStart: DEMO_WEEK_START,
-    calendarItems: defaultWorkflow.calendarItems,
-    storedBlocks: defaultWorkflow.storedBlocks,
-    workflow: defaultWorkflow,
-    revision: defaultWorkflow.revision,
+    weekStart: getMondayWeekStart(new Date()),
+    calendarItems: [],
+    storedBlocks: [],
+    workflow: null,
+    revision: 0,
     selectedOccurrenceId: null,
     detailTarget: null,
     monthOverlayOpen: false,
-    chatMessages: clone(demoMessages["session-1"]),
+    chatMessages: [],
     generation: null,
     toast: null,
     ...overrides,

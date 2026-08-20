@@ -66,7 +66,7 @@ export function WorkspaceProvider({ api = getAppApi(), children, initialState, s
         return loadSession(selectedId);
       })
       .catch(() => {
-        dispatch({ type: "SET_TOAST", message: "데모 워크스페이스를 표시하고 있어요." });
+        dispatch({ type: "SET_TOAST", message: "워크스페이스 데이터를 불러오지 못했어요." });
       });
   }, [api, loadSession, skipLoad, state.selectedSessionId]);
 
@@ -97,7 +97,6 @@ export function WorkspaceProvider({ api = getAppApi(), children, initialState, s
       try {
         const result = await pollGeneration(generation.id, {
           getGeneration: api.getGeneration,
-          intervalMs: api.mode === "mock" ? 10 : 1000,
         });
         dispatch({ type: "SET_GENERATION", generation: result });
         if (result.assistantMessage) {
@@ -229,7 +228,7 @@ export function WorkspaceProvider({ api = getAppApi(), children, initialState, s
         return true;
       }
       dispatch({ type: "MOVE_BLOCK_LOCAL", blockId: item.blockId, ...schedule });
-      if (api.mode !== "api" || !api.moveBlock) {
+      if (!api.moveBlock) {
         return true;
       }
       try {

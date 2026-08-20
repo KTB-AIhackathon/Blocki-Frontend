@@ -5,11 +5,28 @@ import { describe, expect, it, vi } from "vitest";
 import IntegrationSettings from "./IntegrationSettings";
 import { DocumentProvider } from "../../state/DocumentContext";
 import { AuthProvider } from "../../state/AuthContext";
-import { createDocumentMockApi } from "../../mock/documentMockApi";
+
+function createDocumentApiDouble() {
+  let integrations = [
+    { provider: "GITHUB", status: "CONNECTED", itemCount: 1 },
+    { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
+  ];
+  return {
+    listIntegrations: vi.fn(async () => ({ integrations })),
+    listDocuments: vi.fn().mockResolvedValue({ documents: [] }),
+    getDocumentVersion: vi.fn(),
+    connectIntegration: vi.fn(),
+    disconnectIntegration: vi.fn(async (provider) => {
+      const integration = { provider, status: "DISCONNECTED", itemCount: 0 };
+      integrations = integrations.map((item) => item.provider === provider ? integration : item);
+      return { integration };
+    }),
+  };
+}
 
 describe("IntegrationSettings", () => {
   it("수정 폼 없이 사용자 정보와 소스 연동 상태를 보여준다", async () => {
-    const api = createDocumentMockApi();
+    const api = createDocumentApiDouble();
     render(
       <AuthProvider
         api={{ ...api, getCurrentUser: vi.fn(), logout: vi.fn() }}
@@ -36,7 +53,7 @@ describe("IntegrationSettings", () => {
 
   it("연결됨 버튼으로 소스 연결을 해제한다", async () => {
     const user = userEvent.setup();
-    const api = createDocumentMockApi();
+    const api = createDocumentApiDouble();
     render(
       <AuthProvider skipBootstrap initialUser={{ id: "user-1", name: "마일스", email: "miles@example.com" }}>
         <DocumentProvider api={api}>

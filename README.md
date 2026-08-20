@@ -9,11 +9,7 @@ npm install
 npm run dev
 ```
 
-기본값은 `http://localhost:8080`에서 실행되는 Spring API를 Vite 개발 proxy로 연결하는 `api` 모드다. 백엔드 없이 화면만 확인할 때 `.env.local`에 다음 값을 설정한다.
-
-```bash
-VITE_DATA_MODE=mock
-```
+개발 서버는 `http://localhost:8080`에서 실행되는 Spring API를 Vite 개발 proxy로 연결한다.
 
 배포 빌드에서는 Vite 개발 proxy가 없으므로 `VITE_API_ORIGIN`에 배포 백엔드 origin을 지정한다.
 
@@ -48,7 +44,6 @@ Daily Scrum, TIL, Discord 공지 연동, 사용자 정보 수정과 비밀번호
 - `src/routing`은 URL과 화면 상태를 동기화한다.
 - `src/state`는 인증과 문서 조회 상태를 관리한다.
 - `src/api`는 백엔드 응답을 화면 모델로 변환한다.
-- `src/mock`은 백엔드 없이 화면을 검증하는 데이터를 제공한다.
 - `src/styles`는 화면별 CSS를 담는다.
 
 ## 검증

@@ -4,11 +4,35 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../../state/AuthContext";
 import { DocumentProvider } from "../../state/DocumentContext";
-import { createDocumentMockApi } from "../../mock/documentMockApi";
 import AppShell from "./AppShell";
 
+function createDocumentApiDouble() {
+  const documents = ["PORTFOLIO", "RESUME"].map((type) => ({
+    id: `${type.toLowerCase()}-1`,
+    type,
+    title: type === "PORTFOLIO" ? "포트폴리오" : "이력서",
+    latestVersionId: `${type.toLowerCase()}-v1`,
+    versions: [{
+      id: `${type.toLowerCase()}-v1`,
+      versionNumber: 1,
+      createdAt: "2026-08-18T09:00:00Z",
+      markdown: "# 문서 내용",
+    }],
+  }));
+  return {
+    listIntegrations: vi.fn().mockResolvedValue({
+      integrations: [
+        { provider: "GITHUB", status: "CONNECTED", itemCount: 1 },
+        { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
+      ],
+    }),
+    listDocuments: vi.fn().mockResolvedValue({ documents }),
+    getDocumentVersion: vi.fn(),
+  };
+}
+
 function renderShell() {
-  const api = createDocumentMockApi();
+  const api = createDocumentApiDouble();
   render(
     <AuthProvider api={{ ...api, getCurrentUser: vi.fn().mockResolvedValue(null), logout: vi.fn().mockResolvedValue({ ok: true }) }} skipBootstrap initialUser={{ id: "user-1", name: "마일스", email: "miles@example.com" }}>
       <DocumentProvider api={api}>
