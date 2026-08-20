@@ -16,6 +16,11 @@ function createDocumentApiDouble() {
     listDocuments: vi.fn().mockResolvedValue({ documents: [] }),
     getDocumentVersion: vi.fn(),
     connectIntegration: vi.fn(),
+    changeIntegration: vi.fn(async (provider) => {
+      const integration = { provider, status: "DISCONNECTED", itemCount: 0 };
+      integrations = integrations.map((item) => item.provider === provider ? integration : item);
+      return { popupOpened: true, provider, integration };
+    }),
     disconnectIntegration: vi.fn(async (provider) => {
       const integration = { provider, status: "DISCONNECTED", itemCount: 0 };
       integrations = integrations.map((item) => item.provider === provider ? integration : item);
@@ -44,14 +49,15 @@ describe("IntegrationSettings", () => {
     expect(screen.getByText("마일스")).toBeInTheDocument();
     expect(screen.getByText("miles@example.com")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "소스 연동 상태" })).toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "GitHub 계정 변경" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notion 연결하기" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /저장|변경/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /저장/ })).not.toBeInTheDocument();
     expect(screen.queryByText("연결 해제", { exact: true })).not.toBeInTheDocument();
   });
 
-  it("연결됨 버튼으로 소스 연결을 해제한다", async () => {
+  it("계정 변경 버튼으로 기존 연결을 교체하는 OAuth를 시작한다", async () => {
     const user = userEvent.setup();
     const api = createDocumentApiDouble();
     render(
@@ -62,8 +68,9 @@ describe("IntegrationSettings", () => {
       </AuthProvider>,
     );
 
-    await user.click(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" }));
+    await user.click(await screen.findByRole("button", { name: "GitHub 계정 변경" }));
 
+    expect(api.changeIntegration).toHaveBeenCalledWith("GITHUB");
     expect(await screen.findByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
   });
 });

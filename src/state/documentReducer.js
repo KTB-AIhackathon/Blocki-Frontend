@@ -9,6 +9,11 @@ const DEFAULT_INTEGRATIONS = Object.freeze([
   { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
 ]);
 
+const DEFAULT_AUTOMATION = Object.freeze({
+  enabled: false,
+  schedule: Object.freeze({ dayOfWeek: "MONDAY", time: "21:00", timezone: "Asia/Seoul" }),
+});
+
 export const initialDocumentState = {
   activeDocumentType: DOCUMENT_TYPES.PORTFOLIO,
   integrations: DEFAULT_INTEGRATIONS,
@@ -16,6 +21,7 @@ export const initialDocumentState = {
   selectedDocumentId: null,
   selectedVersionId: null,
   selectedVersion: null,
+  automation: DEFAULT_AUTOMATION,
   loadStatus: "IDLE",
   error: null,
   toast: null,
@@ -29,6 +35,7 @@ export function createInitialDocumentState(overrides = {}) {
     ...overrides,
     integrations: mergeIntegrations(overrides.integrations),
     documents: overrides.documents ?? [],
+    automation: mergeAutomation(overrides.automation),
     missingData: overrides.missingData ?? [],
   };
 }
@@ -38,6 +45,17 @@ function mergeIntegrations(integrations = []) {
     ...fallback,
     ...integrations.find((integration) => integration.provider === fallback.provider),
   }));
+}
+
+function mergeAutomation(automation = {}) {
+  return {
+    ...DEFAULT_AUTOMATION,
+    ...automation,
+    schedule: {
+      ...DEFAULT_AUTOMATION.schedule,
+      ...(automation.schedule ?? {}),
+    },
+  };
 }
 
 function findDocumentByType(documents, type) {
@@ -86,6 +104,9 @@ export function documentReducer(state, action) {
             ? state.integrations
             : mergeIntegrations(action.integrations),
           documents: action.documents ?? state.documents,
+          automation: action.automation === undefined
+            ? state.automation
+            : mergeAutomation(action.automation),
           dataNotice: action.dataNotice ?? null,
           missingData: action.missingData ?? [],
           loadStatus: "READY",
@@ -109,6 +130,8 @@ export function documentReducer(state, action) {
       return { ...state, selectedVersion: action.version };
     case "INTEGRATION_UPDATED":
       return { ...state, integrations: replaceIntegration(state.integrations, action.integration) };
+    case "AUTOMATION_UPDATED":
+      return { ...state, automation: mergeAutomation(action.automation) };
     case "SET_TOAST":
       return { ...state, toast: action.message };
     case "CLEAR_TOAST":

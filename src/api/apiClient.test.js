@@ -53,6 +53,27 @@ describe("apiClient", () => {
     });
   });
 
+  it("PDF 응답을 Blob으로 반환한다", async () => {
+    const response = new Response("%PDF-1.7", {
+      status: 200,
+      headers: { "Content-Type": "application/pdf" },
+    });
+    const blobSpy = vi.spyOn(response, "blob");
+    const fetchMock = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await request("/documents/doc-1/versions/version-2/pdf", {
+      headers: { Accept: "application/pdf" },
+      responseType: "blob",
+    });
+
+    expect(result.type).toBe("application/pdf");
+    expect(result.size).toBe(8);
+    expect(blobSpy).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/documents/doc-1/versions/version-2/pdf");
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ Accept: "application/pdf" });
+  });
+
   it("maps common API errors without exposing raw response details", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(

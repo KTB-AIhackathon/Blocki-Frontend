@@ -80,4 +80,37 @@ describe("integration API specification", () => {
     });
     expect(request).toHaveBeenCalledWith("/integrations/github", { method: "DELETE" });
   });
+
+  it("GitHub 계정 변경은 연결 해제 후 계정 선택 OAuth 창을 연다", async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce({ data: { provider: "GITHUB", status: "NOT_CONNECTED" } })
+      .mockResolvedValueOnce({ data: { authorizeUrl: "https://github.com/login/oauth/authorize?client_id=client" } });
+    const popup = { close: vi.fn(), location: { replace: vi.fn() } };
+    const api = createIntegrationApi({ request }, { openPopup: vi.fn().mockReturnValue(popup) });
+
+    await expect(api.changeIntegration("GITHUB")).resolves.toMatchObject({
+      popupOpened: true,
+      provider: "GITHUB",
+      integration: { status: "DISCONNECTED" },
+    });
+
+    expect(request).toHaveBeenNthCalledWith(1, "/integrations/github", { method: "DELETE" });
+    expect(request).toHaveBeenNthCalledWith(2, "/integrations/github/authorize-url", { method: "POST" });
+    expect(popup.location.replace).toHaveBeenCalledWith(
+      "https://github.com/login/oauth/authorize?client_id=client&prompt=select_account",
+    );
+  });
+
+  it("Notion 계정 변경은 지원되지 않는 계정 선택 파라미터를 추가하지 않는다", async () => {
+    const authorizeUrl = "https://api.notion.com/v1/oauth/authorize?owner=user&client_id=client";
+    const request = vi.fn()
+      .mockResolvedValueOnce({ data: { provider: "NOTION", status: "NOT_CONNECTED" } })
+      .mockResolvedValueOnce({ data: { authorizeUrl } });
+    const popup = { close: vi.fn(), location: { replace: vi.fn() } };
+    const api = createIntegrationApi({ request }, { openPopup: vi.fn().mockReturnValue(popup) });
+
+    await api.changeIntegration("NOTION");
+
+    expect(popup.location.replace).toHaveBeenCalledWith(authorizeUrl);
+  });
 });

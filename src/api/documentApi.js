@@ -32,6 +32,17 @@ function normalizeSummary(document = {}) {
   };
 }
 
+function normalizeAutomation(automation = {}) {
+  return {
+    enabled: automation.enabled === true,
+    schedule: {
+      dayOfWeek: automation.schedule?.dayOfWeek ?? "MONDAY",
+      time: automation.schedule?.time ?? "21:00",
+      timezone: automation.schedule?.timezone ?? "Asia/Seoul",
+    },
+  };
+}
+
 function withQuery(path, values) {
   const params = new URLSearchParams();
   Object.entries(values).forEach(([key, value]) => {
@@ -50,6 +61,13 @@ export function createDocumentApi(client = { request }) {
       ? await client.request(path, { signal: options.signal })
       : await client.request(path);
     return normalizeVersion(unwrapData(result), documentId, versionId);
+  }
+
+  async function downloadDocumentVersionPdf(documentId, versionId) {
+    return client.request(`/documents/${documentId}/versions/${versionId}/pdf`, {
+      headers: { Accept: "application/pdf, application/json" },
+      responseType: "blob",
+    });
   }
 
   return {
@@ -80,6 +98,7 @@ export function createDocumentApi(client = { request }) {
     },
 
     getDocumentVersion,
+    downloadDocumentVersionPdf,
 
     async generateDocument(type, idempotencyKey = createIdempotencyKey()) {
       const result = await client.request("/documents/generations", {
@@ -96,6 +115,19 @@ export function createDocumentApi(client = { request }) {
         ? await client.request(path, { signal: options.signal })
         : await client.request(path);
       return unwrapData(result);
+    },
+
+    async getDocumentGenerationAutomation() {
+      const result = await client.request("/document-generation-automation");
+      return normalizeAutomation(unwrapData(result));
+    },
+
+    async updateDocumentGenerationAutomation(enabled) {
+      const result = await client.request("/document-generation-automation", {
+        method: "PUT",
+        body: { enabled },
+      });
+      return normalizeAutomation(unwrapData(result));
     },
   };
 }

@@ -1,5 +1,5 @@
 // 문서 탭·버전 선택과 안전한 Markdown 미리보기를 검증한다.
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import DocumentWorkspace from "./DocumentWorkspace";
@@ -26,12 +26,12 @@ function createDocumentApiDouble() {
     listIntegrations: vi.fn().mockResolvedValue({ integrations: [] }),
     listDocuments: vi.fn().mockResolvedValue({ documents }),
     getDocumentVersion: vi.fn(),
+    downloadDocumentVersionPdf: vi.fn().mockResolvedValue(new Blob(["%PDF"], { type: "application/pdf" })),
   };
 }
 
 describe("DocumentWorkspace", () => {
-  it("포트폴리오와 이력서 문서를 탭으로 바꾸고 Markdown만 읽기 전용으로 보여준다", async () => {
-    const user = userEvent.setup();
+  it("문서 유형 탭 없이 선택된 Markdown을 읽기 전용으로 보여준다", async () => {
     render(
       <DocumentProvider api={createDocumentApiDouble()} initialView="DOCUMENT">
         <DocumentWorkspace />
@@ -40,10 +40,32 @@ describe("DocumentWorkspace", () => {
 
     expect(await screen.findByRole("heading", { name: "Blocki 프로젝트 포트폴리오", level: 1 })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /다운로드|편집/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tablist", { name: "문서 유형" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "PDF 다운로드" })).toBeEnabled();
+  });
 
-    await user.click(screen.getByRole("tab", { name: "이력서" }));
+  it("선택한 문서 버전의 PDF를 받아 브라우저 다운로드를 시작한다", async () => {
+    const user = userEvent.setup();
+    const api = createDocumentApiDouble();
+    const createObjectURL = vi.fn().mockReturnValue("blob:pdf");
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
 
-    expect(await screen.findByRole("heading", { name: "Blocki 개발자 이력서", level: 1 })).toBeInTheDocument();
+    render(
+      <DocumentProvider api={api} initialView="DOCUMENT">
+        <DocumentWorkspace />
+      </DocumentProvider>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "PDF 다운로드" }));
+
+    expect(api.downloadDocumentVersionPdf).toHaveBeenCalledWith("portfolio-1", "portfolio-v1");
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(anchorClick).toHaveBeenCalled();
+    expect(anchorClick.mock.instances[0]).toHaveProperty("download", "Blocki-프로젝트-포트폴리오-v1.pdf");
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith("blob:pdf"));
+
+    vi.unstubAllGlobals();
   });
 });

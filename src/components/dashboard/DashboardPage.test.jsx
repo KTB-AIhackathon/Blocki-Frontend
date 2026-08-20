@@ -23,6 +23,10 @@ function createDocumentApiDouble() {
     { provider: "GITHUB", status: "CONNECTED", itemCount: 4 },
     { provider: "NOTION", status: "DISCONNECTED", itemCount: 0 },
   ];
+  let automation = {
+    enabled: false,
+    schedule: { dayOfWeek: "MONDAY", time: "21:00", timezone: "Asia/Seoul" },
+  };
   const portfolioVersion = createVersion("portfolio-1", "PORTFOLIO", 1);
   let documents = [{
     id: "portfolio-1",
@@ -36,6 +40,11 @@ function createDocumentApiDouble() {
   return {
     listIntegrations: vi.fn(async () => ({ integrations })),
     listDocuments: vi.fn(async () => ({ documents, dataNotice: null, missingData: [] })),
+    getDocumentGenerationAutomation: vi.fn(async () => automation),
+    updateDocumentGenerationAutomation: vi.fn(async (enabled) => {
+      automation = { ...automation, enabled };
+      return automation;
+    }),
     getDocumentVersion: vi.fn(async (documentId, versionId) => documents
       .find((document) => document.id === documentId)
       ?.versions.find((version) => version.id === versionId)),
@@ -101,6 +110,26 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("button", { name: "포트폴리오 생성" })).not.toBeInTheDocument();
   });
 
+  it("문서 자동화 토글을 화면 오른쪽 상단에 표시하고 화면에서만 전환한다", async () => {
+    const user = userEvent.setup();
+    const api = createDocumentApiDouble();
+    renderDashboard(api);
+
+    const automationToggle = await screen.findByRole("switch", { name: "문서 자동화" });
+    const generateButton = screen.getByRole("button", { name: "문서 생성" });
+
+    expect(api.getDocumentGenerationAutomation).toHaveBeenCalledTimes(1);
+    expect(automationToggle.closest(".dashboard-header-actions")).not.toBeNull();
+    expect(generateButton.closest(".document-generation-actions")).not.toBeNull();
+    expect(generateButton.closest(".dashboard-header-actions")).toBeNull();
+    expect(automationToggle).toHaveAttribute("aria-checked", "false");
+
+    await user.click(automationToggle);
+
+    expect(api.updateDocumentGenerationAutomation).toHaveBeenCalledWith(true);
+    expect(automationToggle).toHaveAttribute("aria-checked", "true");
+  });
+
   it("OAuth 완료 메시지를 받으면 백엔드 연동 상태를 다시 조회한다", async () => {
     const api = createDocumentApiDouble();
     api.listIntegrations
@@ -127,12 +156,14 @@ describe("DashboardPage", () => {
 
   it("연결됨 버튼을 누르면 연결하기 상태로 바뀐다", async () => {
     const user = userEvent.setup();
-    renderDashboard();
+    const api = createDocumentApiDouble();
+    renderDashboard(api);
 
     await user.click(await screen.findByRole("button", { name: "GitHub 연결됨, 눌러서 연결 해제" }));
 
     expect(await screen.findByRole("button", { name: "GitHub 연결하기" })).toBeInTheDocument();
     expect(screen.getByText("0개 연결됨")).toBeInTheDocument();
+    expect(api.getDocumentGenerationAutomation).toHaveBeenCalledTimes(2);
   });
 
   it("같은 유형의 문서를 아래로 계속 쌓아 보여준다", async () => {

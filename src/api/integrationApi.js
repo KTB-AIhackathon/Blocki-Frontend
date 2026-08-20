@@ -59,6 +59,15 @@ function getAuthorizeUrl(result) {
   return authorizeUrl;
 }
 
+function addAccountSelection(provider, authorizeUrl) {
+  if (provider !== "GITHUB") {
+    return authorizeUrl;
+  }
+  const parsed = new URL(authorizeUrl);
+  parsed.searchParams.set("prompt", "select_account");
+  return parsed.toString();
+}
+
 export function createIntegrationApi(client = { request }, options = {}) {
   const openPopup = options.openPopup ?? openOAuthPopup;
 
@@ -80,6 +89,30 @@ export function createIntegrationApi(client = { request }, options = {}) {
         });
         popup.location.replace(getAuthorizeUrl(result));
         return { popupOpened: true, provider };
+      } catch (error) {
+        popup.close();
+        throw error;
+      }
+    },
+    async changeIntegration(provider) {
+      const providerPath = provider.toLowerCase();
+      const popup = openPopup(provider);
+      if (!popup) {
+        throw createOAuthError("팝업이 차단됐어요. 브라우저에서 팝업을 허용해주세요.", "OAUTH_POPUP_BLOCKED");
+      }
+      try {
+        const disconnected = await client.request(`/integrations/${providerPath}`, {
+          method: "DELETE",
+        });
+        const result = await client.request(`/integrations/${providerPath}/authorize-url`, {
+          method: "POST",
+        });
+        popup.location.replace(addAccountSelection(provider, getAuthorizeUrl(result)));
+        return {
+          popupOpened: true,
+          provider,
+          integration: normalizeIntegration(unwrapData(disconnected)),
+        };
       } catch (error) {
         popup.close();
         throw error;
